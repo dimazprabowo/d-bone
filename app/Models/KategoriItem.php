@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\KategoriItemStatus;
+use App\Traits\Blameable;
 use App\Traits\HasEncryptedRouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class KategoriItem extends Model
 {
-    use HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
+    use Blameable, HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'code',

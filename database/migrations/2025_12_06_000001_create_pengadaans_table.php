@@ -24,6 +24,8 @@ return new class extends Migration
             $table->timestamp('approved_at')->nullable();
             $table->text('rejection_reason')->nullable();
             $table->text('catatan')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 

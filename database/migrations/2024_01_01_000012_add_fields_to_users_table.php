@@ -21,6 +21,8 @@ return new class extends Migration
             $table->timestamp('rejected_at')->nullable()->after('approved_by');
             $table->foreignId('rejected_by')->nullable()->after('rejected_at')->constrained('users')->nullOnDelete();
             $table->text('rejection_reason')->nullable()->after('rejected_by');
+            $table->foreignId('created_by')->nullable()->after('rejection_reason')->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
 
             $table->index('cabang_id');
             $table->index('is_active');
@@ -34,6 +36,8 @@ return new class extends Migration
             $table->dropForeign(['cabang_id']);
             $table->dropForeign(['approved_by']);
             $table->dropForeign(['rejected_by']);
+            $table->dropForeign(['created_by']);
+            $table->dropForeign(['updated_by']);
             $table->dropIndex(['cabang_id']);
             $table->dropIndex(['is_active']);
             $table->dropIndex(['approval_status']);
@@ -41,6 +45,7 @@ return new class extends Migration
                 'cabang_id', 'phone', 'position', 'is_active',
                 'approval_status', 'approved_at', 'approved_by',
                 'rejected_at', 'rejected_by', 'rejection_reason',
+                'created_by', 'updated_by',
             ]);
         });
     }

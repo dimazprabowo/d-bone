@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\FileStatus;
 use App\Enums\PaymentApprovalStatus;
 use App\Enums\StatusPembayaranPengadaan;
+use App\Traits\Blameable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Invoice extends Model
 {
-    use HasFactory, LogsActivity;
+    use Blameable, HasFactory, LogsActivity;
 
     protected $fillable = [
         'pengadaan_id',

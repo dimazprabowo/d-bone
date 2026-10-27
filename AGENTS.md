@@ -1,9 +1,9 @@
 # Simona - Project Guide
 
 ## Tech Stack
-- Laravel 12 + Livewire 4 + Spatie Permission/Activitylog + Reverb + Maatwebsite Excel + DomPDF
+- Laravel 13 + Livewire 4 + Spatie Permission/Activitylog + Reverb + Maatwebsite Excel 4 + DomPDF
 - Database: PostgreSQL (`db_simona`)
-- PHP 8.2+
+- PHP 8.5+
 
 ## Architecture Patterns
 - **Livewire-first**: Full-page Livewire components for each module, mounted via `Route::view()` or route-model-binding closures.

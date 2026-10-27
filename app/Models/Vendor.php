@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\VendorStatus;
+use App\Traits\Blameable;
 use App\Traits\HasEncryptedRouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Vendor extends Model
 {
-    use HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
+    use Blameable, HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'klaster_id',

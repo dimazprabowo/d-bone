@@ -1,6 +1,6 @@
 ---
 name: bav-apps
-description: Panduan membangun fitur/aplikasi baru di atas template bav-apps (Laravel 12 + Livewire 4) secara konsisten, clean, permission-first, dan UI elegan.
+description: Panduan membangun fitur/aplikasi baru di atas template bav-apps (Laravel 13 + Livewire 4) secara konsisten, clean, permission-first, dan UI elegan.
 triggers:
   - user
   - model
@@ -22,14 +22,22 @@ triggers:
 - WAJIB analisis menyeluruh SEBELUM memberi solusi. Tidak ada duplicate logic, tidak ada field mati, tidak menghapus yang masih dipakai, dan hapus yang sudah tidak dipakai agar codebase CLEAN.
 
 # Stack & Versi (JANGAN diganti)
-- PHP ^8.2, Laravel ^12, Livewire ^4.1
+- PHP ^8.5, Laravel ^13, Livewire ^4.1
 - spatie/laravel-permission (role & permission)
 - spatie/laravel-activitylog (audit log)
-- maatwebsite/excel (export Excel)
+- maatwebsite/excel ^4 (export Excel — di atas phpspreadsheet ^5; method concern WAJIB punya return type sesuai interface, mis. `query(): \Illuminate\Database\Eloquent\Builder`, `collection(): \Illuminate\Support\Collection`, `collection(Collection $c): void` untuk import, `styles(Worksheet $s): ?array`)
 - barryvdh/laravel-dompdf (export PDF)
 - laravel/reverb (websocket/broadcast)
-- intervention/image, league/flysystem-aws-s3-v3 (storage lokal/S3)
+- intervention/image, league/flysystem-aws-s3-v3 (storage lokal/S3 via `FileStorageService` + helper `file_disk()`)
 - Frontend: Blade + TailwindCSS + Alpine (bawaan Livewire)
+- Dev tools: laravel/pint (code style), phpunit ^12 (test — metadata pakai attribute PHP `#[Test]`/`#[DataProvider]` atau prefix `test_`, BUKAN doc-comment `@test`)
+- Bebas deprecation PHP 8.5 / Laravel 13 (WAJIB dijaga):
+  - Konstanta PDO driver pakai kelas driver (`Pdo\Mysql::ATTR_SSL_CA`), bukan `PDO::MYSQL_ATTR_*`.
+  - Jangan panggil `Reflection*::setAccessible()`, `curl_close()`, `finfo_close()`, `imagedestroy()`; jangan cast `(integer)/(boolean)/(double)/(binary)`; jangan pakai `null` sebagai array key; nullable WAJIB eksplisit `?Type $x = null`.
+  - `Request::get()` deprecated -> pakai `$request->input()`/`query()`/`string()`.
+  - Middleware CSRF bernama `PreventRequestForgery` (alias `VerifyCsrfToken`/`ValidateCsrfToken` deprecated).
+  - `cache.serializable_classes=false` & `session.serialization=json` (hardening Laravel 13): simpan HANYA skalar/array di Cache & Session, JANGAN objek/model. Contoh: `SystemConfiguration::get()` me-cache array `{value, data_type}` mentah lalu cast saat dibaca — jangan kembalikan pola cache objek/`parsed_value`.
+  - Cek runtime: `LOG_DEPRECATIONS_CHANNEL=single php artisan test` lalu pastikan tidak ada baris deprecation baru di `storage/logs/laravel.log`.
 
 # Arsitektur Wajib (ikuti pola template, JANGAN bikin pola baru)
 1. LIVEWIRE-FIRST. Semua fitur = Livewire Component. Controller HANYA untuk auth/callback SSO.
@@ -348,7 +356,7 @@ Bungkus aksi Service call dengan try/catch:
 JANGAN bocorkan pesan exception mentah ke user.
 
 # Testing & Quality Gate
-- Sertakan minimal Feature test (Pest/PHPUnit) untuk: authorize gagal/berhasil, CRUD, dan permission gate.
+- Sertakan minimal Feature test (PHPUnit ^12 — attribute `#[Test]` atau prefix `test_`, BUKAN doc-comment `@test`) untuk: authorize gagal/berhasil, CRUD, dan permission gate.
 - Jalankan `./vendor/bin/pint` (code style) sebelum selesai.
 - Factory & Seeder idempotent; daftarkan seeder baru di DatabaseSeeder dengan urutan benar (Permission -> Role -> data master -> dst).
 

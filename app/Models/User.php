@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\UserApprovalStatus;
 use App\Notifications\CustomResetPassword;
 use App\Notifications\CustomVerifyEmail;
+use App\Traits\Blameable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, HasRoles, Notifiable;
+    use Blameable, HasFactory, HasRoles, Notifiable;
 
     protected $fillable = [
         'name',

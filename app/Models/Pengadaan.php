@@ -6,6 +6,7 @@ use App\Enums\PengadaanApprovalStatus;
 use App\Enums\StatusInvoicePengadaan;
 use App\Enums\StatusPembayaranPengadaan;
 use App\Enums\TipeBiaya;
+use App\Traits\Blameable;
 use App\Traits\HasEncryptedRouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Pengadaan extends Model
 {
-    use HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
+    use Blameable, HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'no_pengadaan',
