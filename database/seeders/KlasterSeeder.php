@@ -53,6 +53,12 @@ class KlasterSeeder extends Seeder
                 'description' => 'Vendor penyedia jasa logistik, pengiriman, dan transportasi.',
                 'status' => KlasterStatus::Aktif->value,
             ],
+            [
+                'code' => 'KLS-008',
+                'name' => 'Engineering',
+                'description' => 'Vendor penyedia jasa engineering, desain teknis, dan konsultansi rekayasa.',
+                'status' => KlasterStatus::Aktif->value,
+            ],
         ];
 
         foreach ($klasters as $klaster) {

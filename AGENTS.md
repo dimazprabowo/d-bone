@@ -39,7 +39,7 @@ php -l <file>                       # Lint a PHP file
 ## Modules
 
 ### Master Data
-Entities: `Cabang` (branch), `Vendor` (supplier).
+Entities: `Cabang` (branch), `BisnisArea` (business area), `Klaster` (vendor cluster), `Satuan` (unit), `KategoriItem` (item category), `Vendor` (supplier).
 
 ### Pengadaan Barang & Jasa Module
 Entities: `Pengadaan` (procurement), `PengadaanItem` (procurement line item), `PengadaanEvidence` (procurement documents), `Invoice`, `InvoicePayment`.

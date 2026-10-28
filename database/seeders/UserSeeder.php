@@ -12,8 +12,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $cabangPriok = Cabang::where('code', 'TGP')->first();
-        $cabangSurabaya = Cabang::where('code', 'SBY')->first();
+        $cabangPriok = Cabang::where('code', 'JKT')->first();
+        $cabangSurabaya = Cabang::where('code', 'JKT')->first();
 
         $seedUsers = [
             [

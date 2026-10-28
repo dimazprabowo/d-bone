@@ -108,6 +108,7 @@ Pola full-page form:
 | Form | `<x-input-label>` | `components/input-label.blade.php` |
 | Form | `<x-text-input>` | `components/text-input.blade.php` |
 | Form | `<x-input-error>` | `components/input-error.blade.php` |
+| Form | `<x-date-picker>` | `components/date-picker.blade.php` |
 | Select | `<x-searchable-select>` | `components/searchable-select.blade.php` |
 | Select | `<x-multi-searchable-select>` | `components/multi-searchable-select.blade.php` |
 | Filter | `<x-filter-popover>` | `components/filter-popover.blade.php` |
@@ -173,6 +174,7 @@ Jika butuh variant baru (mis. warna/size berbeda), EXTEND komponen yang ada via 
 - Batal: `<x-cancel-button>`. Hapus: `<x-delete-modal>`. Konfirmasi: `<x-confirm-modal>`.
 - Select: `<x-searchable-select>` / `<x-multi-searchable-select>`. Filter: `<x-filter-popover>`.
 - Form field: `<x-input-label>`, `<x-text-input>`, `<x-input-error>`.
+- Field tanggal: WAJIB `<x-date-picker wire:model="field" />` — JANGAN pakai `<x-text-input type="date">` (native date input tampil inkonsisten antar browser & tidak dark-mode aware). Binding via `@entangle` (pola yang sama seperti `<x-searchable-select>`); tampilan format "d Bulan YYYY" (Indonesia).
 - WAJIB dukung dark mode (kelas `dark:...`), spacing/typography konsisten dengan menu sejenis.
 - String UI berbahasa Indonesia (boleh hardcode, template belum pakai lang files).
 - Breadcrumb WAJIB di full-page form (mis. Master Data > Modul > Edit).

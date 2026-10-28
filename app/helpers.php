@@ -1,5 +1,9 @@
 <?php
 
+use App\Helpers\ConfigHelper;
+use App\Services\FileStorageService;
+use Carbon\Carbon;
+
 if (! function_exists('email_logo_url')) {
     /**
      * Get the public URL for the email logo
@@ -120,7 +124,7 @@ if (! function_exists('app_name')) {
      */
     function app_name(): string
     {
-        return \App\Helpers\ConfigHelper::getAppName();
+        return ConfigHelper::getAppName();
     }
 }
 
@@ -134,7 +138,7 @@ if (! function_exists('system_config')) {
      */
     function system_config(string $key, $default = null)
     {
-        return \App\Helpers\ConfigHelper::get($key, $default);
+        return ConfigHelper::get($key, $default);
     }
 }
 
@@ -144,7 +148,7 @@ if (! function_exists('is_registration_open')) {
      */
     function is_registration_open(): bool
     {
-        return \App\Helpers\ConfigHelper::isRegistrationOpen();
+        return ConfigHelper::isRegistrationOpen();
     }
 }
 
@@ -152,9 +156,9 @@ if (! function_exists('registration_deadline')) {
     /**
      * Get registration deadline as Carbon instance
      */
-    function registration_deadline(): ?\Carbon\Carbon
+    function registration_deadline(): ?Carbon
     {
-        return \App\Helpers\ConfigHelper::getRegistrationDeadline();
+        return ConfigHelper::getRegistrationDeadline();
     }
 }
 
@@ -164,7 +168,7 @@ if (! function_exists('registration_closed_message')) {
      */
     function registration_closed_message(): string
     {
-        return \App\Helpers\ConfigHelper::getRegistrationClosedMessage();
+        return ConfigHelper::getRegistrationClosedMessage();
     }
 }
 
@@ -212,7 +216,7 @@ if (! function_exists('upload_path')) {
      */
     function upload_path(string $feature, array $segments, string $originalName, ?string $baseName = null): string
     {
-        return app(\App\Services\FileStorageService::class)
+        return app(FileStorageService::class)
             ->buildPath($feature, $segments, $originalName, $baseName);
     }
 }

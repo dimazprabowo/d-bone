@@ -37,7 +37,7 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
 
     public function query(): Builder
     {
-        $query = Pengadaan::with(['vendor', 'cabang', 'invoices.payments'])->withCount('items');
+        $query = Pengadaan::with(['vendor', 'cabang', 'bisnisArea', 'invoices.payments'])->withCount('items');
 
         $canAccessAll = Auth::check() && Auth::user()->can('access_all_cabang');
         if (! $canAccessAll) {
@@ -49,7 +49,7 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
         if ($this->search) {
             $operator = $this->getLikeOperator();
             $query->where(function ($q) use ($operator) {
-                $q->where('no_pengadaan', $operator, "%{$this->search}%")
+                $q->where('no_pesanan_spk', $operator, "%{$this->search}%")
                     ->orWhereHas('vendor', function ($v) use ($operator) {
                         $v->where('name', $operator, "%{$this->search}%");
                     });
@@ -64,21 +64,23 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
             $query->where('status_approval', $this->statusFilter);
         }
 
-        return $query->orderByDesc('tanggal_pengadaan');
+        return $query->orderByDesc('tanggal_pesanan_spk');
     }
 
     public function headings(): array
     {
         return [
             'No',
-            'No. Pengadaan',
+            'No. Pesanan/SPK',
             'Nama Pemohon',
             'Tipe Biaya',
             'Nama Project',
             'No. WBS',
             'Vendor',
             'Cabang',
-            'Tanggal Pengadaan',
+            'Bisnis Area',
+            'Tanggal Pesanan/SPK',
+            'Tanggal Jatuh Tempo',
             'Jumlah Item',
             'Total Biaya',
             'Status Approval',
@@ -94,14 +96,16 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
 
         return [
             $no,
-            $pengadaan->no_pengadaan,
+            $pengadaan->no_pesanan_spk,
             $pengadaan->nama_pemohon,
             $pengadaan->tipe_biaya->label(),
             $pengadaan->nama_project ?? '-',
             $pengadaan->no_wbs ?? '-',
             $pengadaan->vendor->name,
             $pengadaan->cabang->name ?? 'Pusat',
-            $pengadaan->tanggal_pengadaan->format('d/m/Y'),
+            $pengadaan->bisnisArea->name ?? '-',
+            $pengadaan->tanggal_pesanan_spk->format('d/m/Y'),
+            $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-',
             $pengadaan->items_count,
             $pengadaan->total_biaya,
             $pengadaan->status_approval->label(),

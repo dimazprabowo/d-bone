@@ -44,7 +44,7 @@ class PengadaanService
         ?string $statusFilter = null,
         int $perPage = 15
     ): LengthAwarePaginator {
-        $query = Pengadaan::with(['vendor', 'cabang', 'approver'])->withCount(['items', 'evidences', 'invoices']);
+        $query = Pengadaan::with(['vendor', 'cabang', 'bisnisArea', 'approver'])->withCount(['items', 'evidences', 'invoices']);
 
         $userCabangId = auth()->check() ? auth()->user()->cabang_id : null;
         $this->applyCabangScope($query, $userCabangId, $cabangFilter);
@@ -52,7 +52,7 @@ class PengadaanService
         if ($search) {
             $operator = $this->getLikeOperator();
             $query->where(function ($q) use ($search, $operator) {
-                $q->where('no_pengadaan', $operator, "%{$search}%")
+                $q->where('no_pesanan_spk', $operator, "%{$search}%")
                     ->orWhereHas('vendor', function ($v) use ($search, $operator) {
                         $v->where('name', $operator, "%{$search}%");
                     });
@@ -67,7 +67,7 @@ class PengadaanService
             $query->where('status_approval', $statusFilter);
         }
 
-        return $query->orderByDesc('tanggal_pengadaan')->paginate($perPage);
+        return $query->orderByDesc('tanggal_pesanan_spk')->paginate($perPage);
     }
 
     /**
@@ -79,7 +79,7 @@ class PengadaanService
     public function create(array $data, array $items, array $evidences = []): Pengadaan
     {
         return DB::transaction(function () use ($data, $items, $evidences) {
-            $data['no_pengadaan'] = strtoupper($data['no_pengadaan']);
+            $data['no_pesanan_spk'] = strtoupper($data['no_pesanan_spk']);
             $isRab = ($data['tipe_biaya'] ?? null) === TipeBiaya::RabProject->value;
             $data['nama_project'] = $isRab ? ($data['nama_project'] ?? null) : null;
             $data['no_wbs'] = $isRab ? strtoupper($data['no_wbs'] ?? '') : null;
@@ -109,8 +109,8 @@ class PengadaanService
     public function update(Pengadaan $pengadaan, array $data, array $items, array $newEvidences = [], array $deletedEvidenceIds = []): Pengadaan
     {
         return DB::transaction(function () use ($pengadaan, $data, $items, $newEvidences, $deletedEvidenceIds) {
-            if (isset($data['no_pengadaan'])) {
-                $data['no_pengadaan'] = strtoupper($data['no_pengadaan']);
+            if (isset($data['no_pesanan_spk'])) {
+                $data['no_pesanan_spk'] = strtoupper($data['no_pesanan_spk']);
             }
 
             if (isset($data['tipe_biaya'])) {
@@ -222,7 +222,7 @@ class PengadaanService
             $record->id,
             $evidence['temp_path'],
             $evidence['original_name'],
-            Str::slug($pengadaan->no_pengadaan)
+            Str::slug($pengadaan->no_pesanan_spk)
         );
 
         return $record;

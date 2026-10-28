@@ -4,11 +4,12 @@ namespace Database\Factories;
 
 use App\Models\KategoriItem;
 use App\Models\Pengadaan;
+use App\Models\PengadaanItem;
 use App\Models\Satuan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PengadaanItem>
+ * @extends Factory<PengadaanItem>
  */
 class PengadaanItemFactory extends Factory
 {

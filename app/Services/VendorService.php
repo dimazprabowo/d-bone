@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\VendorStatus;
 use App\Models\Vendor;
 use App\Traits\HasDynamicLike;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -82,7 +83,7 @@ class VendorService
         return $vendor;
     }
 
-    public function getActiveVendors(): \Illuminate\Database\Eloquent\Collection
+    public function getActiveVendors(): Collection
     {
         return Vendor::active()->orderBy('name')->get();
     }

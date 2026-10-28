@@ -3,10 +3,11 @@
 namespace Database\Factories;
 
 use App\Enums\SatuanStatus;
+use App\Models\Satuan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Satuan>
+ * @extends Factory<Satuan>
  */
 class SatuanFactory extends Factory
 {

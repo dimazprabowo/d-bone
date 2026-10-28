@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\MasterData\VendorManagement;
+use App\Models\Klaster;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -54,7 +55,7 @@ class VendorManagementTest extends TestCase
     public function test_user_with_permission_can_create_vendor(): void
     {
         $user = $this->actingUserWithPermissions(['vendor_view', 'vendor_create']);
-        $klaster = \App\Models\Klaster::factory()->create();
+        $klaster = Klaster::factory()->create();
 
         $this->actingAs($user);
 
@@ -120,7 +121,7 @@ class VendorManagementTest extends TestCase
     public function test_code_must_be_unique(): void
     {
         $user = $this->actingUserWithPermissions(['vendor_view', 'vendor_create']);
-        $klaster = \App\Models\Klaster::factory()->create();
+        $klaster = Klaster::factory()->create();
         Vendor::factory()->create(['code' => 'VDR-100', 'klaster_id' => $klaster->id]);
 
         $this->actingAs($user);

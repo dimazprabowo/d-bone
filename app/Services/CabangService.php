@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\CabangStatus;
 use App\Models\Cabang;
 use App\Traits\HasDynamicLike;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class CabangService
@@ -64,7 +65,7 @@ class CabangService
         return $cabang;
     }
 
-    public function getActiveCabang(): \Illuminate\Database\Eloquent\Collection
+    public function getActiveCabang(): Collection
     {
         return Cabang::active()->orderBy('name')->get();
     }

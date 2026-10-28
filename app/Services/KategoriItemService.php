@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\KategoriItemStatus;
 use App\Models\KategoriItem;
 use App\Traits\HasDynamicLike;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class KategoriItemService
@@ -67,7 +68,7 @@ class KategoriItemService
         return $kategoriItem;
     }
 
-    public function getActiveKategoriItems(): \Illuminate\Database\Eloquent\Collection
+    public function getActiveKategoriItems(): Collection
     {
         return KategoriItem::active()->orderBy('name')->get();
     }

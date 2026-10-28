@@ -11,6 +11,7 @@ use App\Models\Vendor;
 use App\Services\PengadaanService;
 use App\Traits\HasDynamicLike;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -134,7 +135,7 @@ class PengadaanManagement extends Component
     {
         $pengadaan = Pengadaan::findOrFail($id);
         $this->deletingPengadaanId = $pengadaan->id;
-        $this->deletingPengadaanName = $pengadaan->no_pengadaan;
+        $this->deletingPengadaanName = $pengadaan->no_pesanan_spk;
         $this->showDeleteModal = true;
     }
 
@@ -147,7 +148,7 @@ class PengadaanManagement extends Component
             $service->delete($pengadaan);
             $this->notifySuccess('Pengadaan berhasil dihapus!');
             $this->showDeleteModal = false;
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak dapat menghapus pengadaan ini.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
@@ -160,7 +161,7 @@ class PengadaanManagement extends Component
         $this->authorize('approve', $pengadaan);
 
         $this->reviewingPengadaanId = $pengadaan->id;
-        $this->reviewingPengadaanName = $pengadaan->no_pengadaan;
+        $this->reviewingPengadaanName = $pengadaan->no_pesanan_spk;
         $this->showApproveModal = true;
     }
 
@@ -173,7 +174,7 @@ class PengadaanManagement extends Component
             $service->approve($pengadaan, auth()->id());
             $this->notifySuccess('Pengadaan berhasil disetujui!');
             $this->showApproveModal = false;
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak memiliki izin untuk menyetujui pengadaan.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
@@ -186,7 +187,7 @@ class PengadaanManagement extends Component
         $this->authorize('approve', $pengadaan);
 
         $this->reviewingPengadaanId = $pengadaan->id;
-        $this->reviewingPengadaanName = $pengadaan->no_pengadaan;
+        $this->reviewingPengadaanName = $pengadaan->no_pesanan_spk;
         $this->rejectionReason = '';
         $this->showRejectModal = true;
     }
@@ -204,7 +205,7 @@ class PengadaanManagement extends Component
             $service->reject($pengadaan, auth()->id(), $this->rejectionReason);
             $this->notifySuccess('Pengadaan telah ditolak.');
             $this->showRejectModal = false;
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak memiliki izin untuk menolak pengadaan.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
@@ -226,7 +227,7 @@ class PengadaanManagement extends Component
         $service = app(PengadaanService::class);
         $pengadaans = $service->getFiltered($this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter, perPage: 100000)
             ->getCollection()
-            ->load('invoices.payments');
+            ->load(['invoices.payments', 'bisnisArea']);
 
         $pdf = Pdf::loadView('exports.pengadaan-pdf', ['pengadaans' => $pengadaans]);
         $pdf->setPaper('a4', 'landscape');

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Traits;
 
+use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\Chat;
 use App\Models\KategoriItem;
@@ -33,6 +34,7 @@ trait HasMenuItems
         $perms = [
             'dashboard_view' => Gate::allows('viewStats'),
             'cabang_view' => Gate::allows('viewAny', Cabang::class),
+            'bisnis_area_view' => Gate::allows('viewAny', BisnisArea::class),
             'klaster_view' => Gate::allows('viewAny', Klaster::class),
             'satuan_view' => Gate::allows('viewAny', Satuan::class),
             'kategori_item_view' => Gate::allows('viewAny', KategoriItem::class),
@@ -64,6 +66,13 @@ trait HasMenuItems
                 'name' => 'Cabang',
                 'route' => 'master-data.cabangs',
                 'active' => $req->routeIs('master-data.cabangs'),
+            ];
+        }
+        if ($perms['bisnis_area_view']) {
+            $masterDataChildren[] = [
+                'name' => 'Bisnis Area',
+                'route' => 'master-data.bisnis-areas',
+                'active' => $req->routeIs('master-data.bisnis-areas'),
             ];
         }
         if ($perms['klaster_view']) {

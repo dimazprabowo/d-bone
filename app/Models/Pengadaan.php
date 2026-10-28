@@ -21,14 +21,16 @@ class Pengadaan extends Model
     use Blameable, HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
-        'no_pengadaan',
+        'no_pesanan_spk',
         'nama_pemohon',
         'tipe_biaya',
         'nama_project',
         'no_wbs',
         'vendor_id',
+        'bisnis_area_id',
         'cabang_id',
-        'tanggal_pengadaan',
+        'tanggal_pesanan_spk',
+        'tanggal_jatuh_tempo',
         'total_biaya',
         'status_approval',
         'approved_by',
@@ -38,7 +40,8 @@ class Pengadaan extends Model
     ];
 
     protected $casts = [
-        'tanggal_pengadaan' => 'date',
+        'tanggal_pesanan_spk' => 'date',
+        'tanggal_jatuh_tempo' => 'date',
         'total_biaya' => 'decimal:2',
         'status_approval' => PengadaanApprovalStatus::class,
         'tipe_biaya' => TipeBiaya::class,
@@ -52,8 +55,9 @@ class Pengadaan extends Model
     {
         return LogOptions::defaults()
             ->logOnly([
-                'no_pengadaan', 'nama_pemohon', 'tipe_biaya', 'nama_project', 'no_wbs',
-                'vendor_id', 'cabang_id', 'tanggal_pengadaan',
+                'no_pesanan_spk', 'nama_pemohon', 'tipe_biaya', 'nama_project', 'no_wbs',
+                'vendor_id',
+                'bisnis_area_id', 'cabang_id', 'tanggal_pesanan_spk', 'tanggal_jatuh_tempo',
                 'total_biaya', 'status_approval', 'rejection_reason',
             ])
             ->logOnlyDirty()
@@ -69,6 +73,11 @@ class Pengadaan extends Model
     public function cabang(): BelongsTo
     {
         return $this->belongsTo(Cabang::class);
+    }
+
+    public function bisnisArea(): BelongsTo
+    {
+        return $this->belongsTo(BisnisArea::class);
     }
 
     public function approver(): BelongsTo

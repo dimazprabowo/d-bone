@@ -8,6 +8,7 @@ use App\Models\InvoicePayment;
 use App\Models\Pengadaan;
 use App\Services\FileStorageService;
 use App\Services\InvoiceService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -79,7 +80,7 @@ class PengadaanDetail extends Component
     protected function loadPengadaan(): void
     {
         $this->pengadaan = $this->pengadaan->fresh([
-            'vendor', 'cabang', 'approver', 'items.satuan', 'items.kategoriItem', 'evidences',
+            'vendor', 'cabang', 'bisnisArea', 'approver', 'items.satuan', 'items.kategoriItem', 'evidences',
             'invoices.payments.approver',
         ]);
     }
@@ -201,7 +202,7 @@ class PengadaanDetail extends Component
                 $service->updateInvoice($invoice, $data);
 
                 if ($filePayload) {
-                    $service->replaceInvoiceFile($invoice, $filePayload, Str::slug($this->pengadaan->no_pengadaan));
+                    $service->replaceInvoiceFile($invoice, $filePayload, Str::slug($this->pengadaan->no_pesanan_spk));
                 }
 
                 $this->notifySuccess('Invoice berhasil diupdate!');
@@ -212,7 +213,7 @@ class PengadaanDetail extends Component
 
             $this->closeInvoiceModal();
             $this->loadPengadaan();
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak memiliki izin untuk melakukan aksi ini.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
@@ -362,7 +363,7 @@ class PengadaanDetail extends Component
                 $service->updatePayment($payment, $data);
 
                 if ($filePayload) {
-                    $service->replacePaymentFile($payment, $filePayload, Str::slug($this->pengadaan->no_pengadaan));
+                    $service->replacePaymentFile($payment, $filePayload, Str::slug($this->pengadaan->no_pesanan_spk));
                 }
 
                 $this->notifySuccess('Pembayaran berhasil diupdate!');
@@ -373,7 +374,7 @@ class PengadaanDetail extends Component
 
             $this->closePaymentModal();
             $this->loadPengadaan();
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak memiliki izin untuk melakukan aksi ini.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
@@ -450,7 +451,7 @@ class PengadaanDetail extends Component
             $this->notifySuccess('Pembayaran berhasil disetujui!');
             $this->showApprovePaymentModal = false;
             $this->loadPengadaan();
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak memiliki izin untuk menyetujui pembayaran ini.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
@@ -483,7 +484,7 @@ class PengadaanDetail extends Component
             $this->notifySuccess('Pembayaran telah ditolak.');
             $this->showRejectPaymentModal = false;
             $this->loadPengadaan();
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak memiliki izin untuk menolak pembayaran ini.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');

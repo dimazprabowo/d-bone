@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\KlasterStatus;
 use App\Models\Klaster;
 use App\Traits\HasDynamicLike;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class KlasterService
@@ -68,7 +69,7 @@ class KlasterService
         return $klaster;
     }
 
-    public function getActiveKlasters(): \Illuminate\Database\Eloquent\Collection
+    public function getActiveKlasters(): Collection
     {
         return Klaster::active()->orderBy('name')->get();
     }

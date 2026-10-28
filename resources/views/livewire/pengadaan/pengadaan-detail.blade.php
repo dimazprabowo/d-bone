@@ -4,14 +4,14 @@
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
                 <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $pengadaan->no_pengadaan }}</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $pengadaan->no_pesanan_spk }}</h2>
                     <span class="px-2 py-1 text-xs font-medium rounded-full {{ $pengadaan->status_approval->badgeClass() }}">
                         {{ $pengadaan->status_approval->label() }}
                     </span>
                 </div>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ $pengadaan->tanggal_pengadaan->format('d F Y') }} • Vendor: {{ $pengadaan->vendor->name }} ({{ $pengadaan->vendor->klaster->name }})
-                    • Cabang: {{ $pengadaan->cabang->name ?? 'Pusat' }}
+                    {{ $pengadaan->tanggal_pesanan_spk->format('d F Y') }} • Vendor: {{ $pengadaan->vendor->name }} ({{ $pengadaan->vendor->klaster->name }})
+                    • Cabang: {{ $pengadaan->cabang->name ?? 'Pusat' }}{{ $pengadaan->tanggal_jatuh_tempo ? ' • Jatuh tempo: '.$pengadaan->tanggal_jatuh_tempo->format('d/m/Y') : '' }} • Bisnis Area: {{ $pengadaan->bisnisArea->name ?? '-' }}
                 </p>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Pemohon: {{ $pengadaan->nama_pemohon }} • Tipe Biaya: {{ $pengadaan->tipe_biaya->label() }}{{ $pengadaan->nama_project ? ' • Project: '.$pengadaan->nama_project : '' }}{{ $pengadaan->no_wbs ? ' • No. WBS: '.$pengadaan->no_wbs : '' }}
@@ -331,7 +331,7 @@
                                 </div>
                                 <div>
                                     <x-input-label for="inv_tanggal_invoice" value="Tanggal Invoice" :required="true" />
-                                    <x-text-input wire:model="inv_tanggal_invoice" id="inv_tanggal_invoice" type="date" class="mt-1 block w-full" />
+                                    <x-date-picker wire:model="inv_tanggal_invoice" id="inv_tanggal_invoice" />
                                     <x-input-error :messages="$errors->get('inv_tanggal_invoice')" class="mt-2" />
                                 </div>
                                 <div>
@@ -340,7 +340,7 @@
                                 </div>
                                 <div>
                                     <x-input-label for="inv_jatuh_tempo" value="Jatuh Tempo" />
-                                    <x-text-input wire:model="inv_jatuh_tempo" id="inv_jatuh_tempo" type="date" class="mt-1 block w-full" />
+                                    <x-date-picker wire:model="inv_jatuh_tempo" id="inv_jatuh_tempo" />
                                     <x-input-error :messages="$errors->get('inv_jatuh_tempo')" class="mt-2" />
                                 </div>
                                 <div class="sm:col-span-2">
@@ -401,7 +401,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <x-input-label for="pay_tanggal_bayar" value="Tanggal Bayar" :required="true" />
-                                    <x-text-input wire:model="pay_tanggal_bayar" id="pay_tanggal_bayar" type="date" class="mt-1 block w-full" />
+                                    <x-date-picker wire:model="pay_tanggal_bayar" id="pay_tanggal_bayar" />
                                     <x-input-error :messages="$errors->get('pay_tanggal_bayar')" class="mt-2" />
                                 </div>
                                 <div>

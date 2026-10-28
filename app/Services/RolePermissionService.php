@@ -109,6 +109,12 @@ class RolePermissionService
                 ['name' => 'kategori_item_export_excel', 'label' => 'Export Excel Kategori Item'],
                 ['name' => 'kategori_item_export_pdf',   'label' => 'Export PDF Kategori Item'],
             ],
+            'Bisnis Area' => [
+                ['name' => 'bisnis_area_view',   'label' => 'Lihat Bisnis Area'],
+                ['name' => 'bisnis_area_create', 'label' => 'Tambah Bisnis Area'],
+                ['name' => 'bisnis_area_update', 'label' => 'Edit Bisnis Area'],
+                ['name' => 'bisnis_area_delete', 'label' => 'Hapus Bisnis Area'],
+            ],
             'Pengadaan Barang & Jasa' => [
                 ['name' => 'vendor_view',         'label' => 'Lihat Vendor'],
                 ['name' => 'vendor_create',       'label' => 'Tambah Vendor'],

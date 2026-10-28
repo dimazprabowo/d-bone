@@ -3,10 +3,11 @@
 namespace Database\Factories;
 
 use App\Enums\KlasterStatus;
+use App\Models\Klaster;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Klaster>
+ * @extends Factory<Klaster>
  */
 class KlasterFactory extends Factory
 {

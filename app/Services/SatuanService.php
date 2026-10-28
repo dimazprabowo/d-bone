@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\SatuanStatus;
 use App\Models\Satuan;
 use App\Traits\HasDynamicLike;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class SatuanService
@@ -68,7 +69,7 @@ class SatuanService
         return $satuan;
     }
 
-    public function getActiveSatuans(): \Illuminate\Database\Eloquent\Collection
+    public function getActiveSatuans(): Collection
     {
         return Satuan::active()->orderBy('name')->get();
     }

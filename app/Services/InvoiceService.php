@@ -39,7 +39,7 @@ class InvoiceService
                     $invoice->id,
                     $file['temp_path'],
                     $file['original_name'],
-                    Str::slug($pengadaan->no_pengadaan)
+                    Str::slug($pengadaan->no_pesanan_spk)
                 );
             }
 
@@ -108,7 +108,7 @@ class InvoiceService
                     $payment->id,
                     $file['temp_path'],
                     $file['original_name'],
-                    Str::slug($invoice->pengadaan->no_pengadaan)
+                    Str::slug($invoice->pengadaan->no_pesanan_spk)
                 );
             }
 

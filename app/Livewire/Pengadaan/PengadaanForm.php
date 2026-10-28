@@ -4,6 +4,7 @@ namespace App\Livewire\Pengadaan;
 
 use App\Enums\TipeBiaya;
 use App\Livewire\Traits\HasNotification;
+use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\Klaster;
 use App\Models\Pengadaan;
@@ -11,8 +12,10 @@ use App\Models\Satuan;
 use App\Models\Vendor;
 use App\Services\FileStorageService;
 use App\Services\PengadaanService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -27,7 +30,7 @@ class PengadaanForm extends Component
     public bool $editMode = false;
 
     // Form fields
-    public $no_pengadaan;
+    public $no_pesanan_spk;
 
     public $nama_pemohon;
 
@@ -41,9 +44,13 @@ class PengadaanForm extends Component
 
     public $vendor_id;
 
+    public $bisnis_area_id;
+
     public $cabang_id;
 
-    public $tanggal_pengadaan;
+    public $tanggal_pesanan_spk;
+
+    public $tanggal_jatuh_tempo;
 
     public $catatan;
 
@@ -55,6 +62,14 @@ class PengadaanForm extends Component
 
     public $deletedEvidenceIds = [];
 
+    public $showRemoveItemModal = false;
+
+    public $removingItemIndex = null;
+
+    public $showRemoveEvidenceModal = false;
+
+    public $removingEvidenceIndex = null;
+
     public function mount($pengadaan = null): void
     {
         if ($pengadaan) {
@@ -64,15 +79,17 @@ class PengadaanForm extends Component
             $this->authorize('update', $pengadaan);
 
             $this->fill([
-                'no_pengadaan' => $pengadaan->no_pengadaan,
+                'no_pesanan_spk' => $pengadaan->no_pesanan_spk,
                 'nama_pemohon' => $pengadaan->nama_pemohon,
                 'tipe_biaya' => $pengadaan->tipe_biaya?->value,
                 'nama_project' => $pengadaan->nama_project,
                 'no_wbs' => $pengadaan->no_wbs,
                 'klaster_id' => $pengadaan->vendor->klaster_id,
                 'vendor_id' => $pengadaan->vendor_id,
+                'bisnis_area_id' => $pengadaan->bisnis_area_id,
                 'cabang_id' => $pengadaan->cabang_id,
-                'tanggal_pengadaan' => $pengadaan->tanggal_pengadaan?->format('Y-m-d'),
+                'tanggal_pesanan_spk' => $pengadaan->tanggal_pesanan_spk?->format('Y-m-d'),
+                'tanggal_jatuh_tempo' => $pengadaan->tanggal_jatuh_tempo?->format('Y-m-d'),
                 'catatan' => $pengadaan->catatan,
             ]);
 
@@ -95,7 +112,7 @@ class PengadaanForm extends Component
             ])->toArray();
         } else {
             $this->authorize('create', Pengadaan::class);
-            $this->tanggal_pengadaan = now()->format('Y-m-d');
+            $this->tanggal_pesanan_spk = now()->format('Y-m-d');
         }
 
         if (empty($this->items)) {
@@ -106,15 +123,17 @@ class PengadaanForm extends Component
     public function rules()
     {
         return [
-            'no_pengadaan' => ['required', 'string', 'max:50', $this->editMode ? 'unique:pengadaans,no_pengadaan,'.$this->pengadaanId : 'unique:pengadaans,no_pengadaan'],
+            'no_pesanan_spk' => ['required', 'string', 'max:50', $this->editMode ? 'unique:pengadaans,no_pesanan_spk,'.$this->pengadaanId : 'unique:pengadaans,no_pesanan_spk'],
             'nama_pemohon' => 'required|string|max:150',
             'tipe_biaya' => ['required', Rule::enum(TipeBiaya::class)],
             'nama_project' => ['nullable', 'string', 'max:150', Rule::requiredIf($this->tipe_biaya === TipeBiaya::RabProject->value)],
             'no_wbs' => ['nullable', 'string', 'max:50', Rule::requiredIf($this->tipe_biaya === TipeBiaya::RabProject->value)],
             'klaster_id' => 'required|exists:klasters,id',
             'vendor_id' => 'required|exists:vendors,id',
+            'bisnis_area_id' => 'required|exists:bisnis_areas,id',
             'cabang_id' => 'nullable|exists:cabangs,id',
-            'tanggal_pengadaan' => 'required|date',
+            'tanggal_pesanan_spk' => 'required|date',
+            'tanggal_jatuh_tempo' => 'nullable|date|after_or_equal:tanggal_pesanan_spk',
             'catatan' => 'nullable|string|max:2000',
             'items' => ['required', 'array', 'min:1', function ($attribute, $value, $fail) {
                 $total = 0;
@@ -154,15 +173,17 @@ class PengadaanForm extends Component
     public function validationAttributes()
     {
         return [
-            'no_pengadaan' => 'nomor pengadaan',
+            'no_pesanan_spk' => 'nomor pesanan/SPK',
             'nama_pemohon' => 'nama pemohon',
             'tipe_biaya' => 'tipe biaya',
             'nama_project' => 'nama project',
             'no_wbs' => 'nomor WBS',
             'klaster_id' => 'klaster vendor',
             'vendor_id' => 'vendor',
+            'bisnis_area_id' => 'bisnis area',
             'cabang_id' => 'cabang',
-            'tanggal_pengadaan' => 'tanggal pengadaan',
+            'tanggal_pesanan_spk' => 'tanggal pesanan/SPK',
+            'tanggal_jatuh_tempo' => 'tanggal jatuh tempo',
             'catatan' => 'catatan',
             'items.*.nama_item' => 'nama item',
             'items.*.kategori_item_id' => 'kategori item',
@@ -255,6 +276,14 @@ class PengadaanForm extends Component
         ])->toArray();
     }
 
+    public function getBisnisAreaOptionsProperty(): array
+    {
+        return BisnisArea::active()->orderBy('name')->get()->map(fn ($b) => [
+            'value' => $b->id,
+            'label' => $b->name,
+        ])->toArray();
+    }
+
     public function getSatuanOptionsProperty(): array
     {
         return Satuan::active()->orderBy('name')->get()->map(fn ($s) => [
@@ -285,10 +314,21 @@ class PengadaanForm extends Component
         ];
     }
 
-    public function removeItem($index): void
+    public function confirmRemoveItem($index): void
     {
-        unset($this->items[$index]);
-        $this->items = array_values($this->items);
+        $this->removingItemIndex = $index;
+        $this->showRemoveItemModal = true;
+    }
+
+    public function removeItem(): void
+    {
+        if ($this->removingItemIndex !== null) {
+            unset($this->items[$this->removingItemIndex]);
+            $this->items = array_values($this->items);
+        }
+
+        $this->removingItemIndex = null;
+        $this->showRemoveItemModal = false;
     }
 
     // ============================================================
@@ -308,14 +348,27 @@ class PengadaanForm extends Component
         ];
     }
 
-    public function removeEvidence($index): void
+    public function confirmRemoveEvidence($index): void
     {
-        if (isset($this->evidences[$index]['id']) && $this->evidences[$index]['id']) {
-            $this->deletedEvidenceIds[] = $this->evidences[$index]['id'];
+        $this->removingEvidenceIndex = $index;
+        $this->showRemoveEvidenceModal = true;
+    }
+
+    public function removeEvidence(): void
+    {
+        $index = $this->removingEvidenceIndex;
+
+        if ($index !== null) {
+            if (isset($this->evidences[$index]['id']) && $this->evidences[$index]['id']) {
+                $this->deletedEvidenceIds[] = $this->evidences[$index]['id'];
+            }
+
+            unset($this->evidences[$index]);
+            $this->evidences = array_values($this->evidences);
         }
 
-        unset($this->evidences[$index]);
-        $this->evidences = array_values($this->evidences);
+        $this->removingEvidenceIndex = null;
+        $this->showRemoveEvidenceModal = false;
     }
 
     public function removeEvidenceFile($index): void
@@ -354,21 +407,23 @@ class PengadaanForm extends Component
     {
         try {
             $this->validate();
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->notifyValidationError($e);
             throw $e;
         }
 
         try {
             $data = [
-                'no_pengadaan' => strtoupper($this->no_pengadaan),
+                'no_pesanan_spk' => strtoupper($this->no_pesanan_spk),
                 'nama_pemohon' => $this->nama_pemohon,
                 'tipe_biaya' => $this->tipe_biaya,
                 'nama_project' => $this->nama_project,
                 'no_wbs' => $this->no_wbs,
                 'vendor_id' => $this->vendor_id,
+                'bisnis_area_id' => $this->bisnis_area_id,
                 'cabang_id' => $this->cabang_id,
-                'tanggal_pengadaan' => $this->tanggal_pengadaan,
+                'tanggal_pesanan_spk' => $this->tanggal_pesanan_spk,
+                'tanggal_jatuh_tempo' => $this->tanggal_jatuh_tempo,
                 'catatan' => $this->catatan,
             ];
 
@@ -412,7 +467,7 @@ class PengadaanForm extends Component
 
                 return $this->redirect(route('pengadaan.show', $pengadaan), navigate: true);
             }
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak memiliki izin untuk melakukan aksi ini.');
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');

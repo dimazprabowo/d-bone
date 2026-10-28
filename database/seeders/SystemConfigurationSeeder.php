@@ -76,64 +76,6 @@ class SystemConfigurationSeeder extends Seeder
                 'is_editable' => true,
                 'is_active' => true,
             ],
-
-            // Pengadaan - reminder invoice jatuh tempo (passive reminder)
-            [
-                'key' => 'pengadaan.invoice_reminder.is_active',
-                'category' => 'notification',
-                'value' => '1',
-                'data_type' => 'boolean',
-                'description' => 'Aktifkan/nonaktifkan pengiriman email reminder invoice jatuh tempo harian. Nonaktifkan untuk menghentikan semua reminder otomatis terkait invoice pengadaan.',
-                'is_editable' => true,
-                'is_active' => true,
-            ],
-            [
-                'key' => 'pengadaan.invoice_reminder.threshold_days',
-                'category' => 'notification',
-                'value' => '7',
-                'data_type' => 'integer',
-                'description' => 'Berapa hari sebelum tanggal jatuh tempo sebuah invoice dianggap "akan jatuh tempo" dan mendapat email reminder warning. Default: 7 hari. Invoice yang sudah lewat jatuh tempo juga mendapat reminder overdue.',
-                'is_editable' => true,
-                'is_active' => true,
-            ],
-            [
-                'key' => 'pengadaan.invoice_reminder.schedule_time',
-                'category' => 'notification',
-                'value' => '08:00',
-                'data_type' => 'string',
-                'description' => 'Jam eksekusi reminder invoice jatuh tempo harian (format 24 jam HH:MM). Contoh: 08:00, 06:30. Perubahan akan efektif setelah cache konfigurasi di-clear.',
-                'is_editable' => true,
-                'is_active' => true,
-            ],
-
-            // Pengadaan - threshold & SLA
-            [
-                'key' => 'pengadaan.approval_sla_hours',
-                'category' => 'sla',
-                'value' => '48',
-                'data_type' => 'integer',
-                'description' => 'Target SLA approval pengadaan dalam jam. Pengadaan yang melebihi SLA ditandai "overdue" di dashboard. Default: 48 jam (2 hari kerja).',
-                'is_editable' => true,
-                'is_active' => true,
-            ],
-            [
-                'key' => 'pengadaan.payment_approval_sla_hours',
-                'category' => 'sla',
-                'value' => '24',
-                'data_type' => 'integer',
-                'description' => 'Target SLA approval pembayaran (InvoicePayment) dalam jam. Pembayaran yang melebihi SLA ditandai "overdue" di dashboard. Default: 24 jam (1 hari kerja).',
-                'is_editable' => true,
-                'is_active' => true,
-            ],
-            [
-                'key' => 'pengadaan.default_jatuh_tempo_days',
-                'category' => 'threshold',
-                'value' => '30',
-                'data_type' => 'integer',
-                'description' => 'Default jumlah hari dari tanggal invoice ke tanggal jatuh tempo. Dipakai sebagai pre-fill saat input invoice baru. Default: 30 hari (Net-30).',
-                'is_editable' => true,
-                'is_active' => true,
-            ],
         ];
 
         foreach ($configurations as $config) {

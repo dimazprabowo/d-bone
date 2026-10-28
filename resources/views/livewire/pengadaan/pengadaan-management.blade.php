@@ -1,7 +1,7 @@
 <div>
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
         <div class="flex-1 w-full sm:w-auto">
-            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari no. pengadaan / vendor..."
+            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari no. pesanan/SPK / vendor..."
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
         </div>
 
@@ -51,10 +51,11 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">No. Pengadaan</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">No. Pesanan/SPK</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendor</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cabang</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl. Pesanan/SPK</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</th>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Biaya</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
@@ -64,7 +65,7 @@
                     @forelse($pengadaans as $pengadaan)
                         <tr wire:key="pengadaan-{{ $pengadaan->id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $pengadaan->no_pengadaan }}</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $pengadaan->no_pesanan_spk }}</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ $pengadaan->items_count }} item, {{ $pengadaan->evidences_count }} evidence</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -74,7 +75,10 @@
                                 <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->cabang->name ?? 'Pusat' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->tanggal_pengadaan->format('d/m/Y') }}</div>
+                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->tanggal_pesanan_spk->format('d/m/Y') }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
                                 <div class="text-sm font-semibold text-gray-900 dark:text-white">Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</div>

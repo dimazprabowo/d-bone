@@ -4,10 +4,11 @@ namespace Database\Factories;
 
 use App\Enums\PaymentApprovalStatus;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\InvoicePayment>
+ * @extends Factory<InvoicePayment>
  */
 class InvoicePaymentFactory extends Factory
 {

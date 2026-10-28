@@ -4,7 +4,11 @@ namespace Tests\Feature;
 
 use App\Livewire\Pengadaan\PengadaanForm;
 use App\Livewire\Pengadaan\PengadaanManagement;
+use App\Models\BisnisArea;
+use App\Models\KategoriItem;
+use App\Models\Klaster;
 use App\Models\Pengadaan;
+use App\Models\Satuan;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,38 +48,39 @@ class PengadaanManagementTest extends TestCase
     public function test_user_with_permission_can_view_pengadaan_list(): void
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view']);
-        $pengadaan = Pengadaan::factory()->create(['no_pengadaan' => 'PG-TEST-001']);
+        $pengadaan = Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-TEST-001']);
 
         $this->actingAs($user);
 
         Livewire::test(PengadaanManagement::class)
-            ->assertSee('PG-TEST-001');
+            ->assertSee('SPK-TEST-001');
     }
 
     public function test_user_can_create_pengadaan_with_items(): void
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_create']);
         $vendor = Vendor::factory()->create();
-        $kategoriItem = \App\Models\KategoriItem::factory()->create();
+        $kategoriItem = KategoriItem::factory()->create();
         $vendor->kategoriItems()->sync([$kategoriItem->id]);
 
         $this->actingAs($user);
 
         Livewire::test(PengadaanForm::class)
-            ->set('no_pengadaan', 'pg-2026-001')
+            ->set('no_pesanan_spk', 'spk-2026-001')
             ->set('nama_pemohon', 'Budi Santoso')
             ->set('tipe_biaya', 'Fix Cost')
             ->set('klaster_id', $vendor->klaster_id)
             ->set('vendor_id', $vendor->id)
-            ->set('tanggal_pengadaan', now()->format('Y-m-d'))
+            ->set('bisnis_area_id', BisnisArea::factory()->create()->id)
+            ->set('tanggal_pesanan_spk', now()->format('Y-m-d'))
             ->set('items', [
-                ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => $kategoriItem->id, 'qty' => 2, 'satuan_id' => \App\Models\Satuan::factory()->create()->id, 'harga_satuan' => '10000000'],
+                ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => $kategoriItem->id, 'qty' => 2, 'satuan_id' => Satuan::factory()->create()->id, 'harga_satuan' => '10000000'],
             ])
             ->call('save')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('pengadaans', [
-            'no_pengadaan' => 'PG-2026-001',
+            'no_pesanan_spk' => 'SPK-2026-001',
             'nama_pemohon' => 'Budi Santoso',
             'tipe_biaya' => 'Fix Cost',
             'no_wbs' => null,
@@ -83,7 +88,7 @@ class PengadaanManagementTest extends TestCase
             'total_biaya' => 20000000,
         ]);
 
-        $pengadaan = Pengadaan::where('no_pengadaan', 'PG-2026-001')->first();
+        $pengadaan = Pengadaan::where('no_pesanan_spk', 'SPK-2026-001')->first();
         $this->assertDatabaseHas('pengadaan_items', [
             'pengadaan_id' => $pengadaan->id,
             'nama_item' => 'Laptop',
@@ -96,8 +101,8 @@ class PengadaanManagementTest extends TestCase
     public function test_vendor_options_filtered_by_selected_klaster(): void
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_create']);
-        $klasterA = \App\Models\Klaster::factory()->create();
-        $klasterB = \App\Models\Klaster::factory()->create();
+        $klasterA = Klaster::factory()->create();
+        $klasterB = Klaster::factory()->create();
         $vendorA = Vendor::factory()->create(['klaster_id' => $klasterA->id]);
         Vendor::factory()->create(['klaster_id' => $klasterB->id]);
 
@@ -117,8 +122,8 @@ class PengadaanManagementTest extends TestCase
         $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_create']);
         $vendorA = Vendor::factory()->create();
         $vendorB = Vendor::factory()->create();
-        $kategoriA = \App\Models\KategoriItem::factory()->create();
-        $kategoriB = \App\Models\KategoriItem::factory()->create();
+        $kategoriA = KategoriItem::factory()->create();
+        $kategoriB = KategoriItem::factory()->create();
         $vendorA->kategoriItems()->sync([$kategoriA->id]);
         $vendorB->kategoriItems()->sync([$kategoriB->id]);
 
@@ -137,19 +142,20 @@ class PengadaanManagementTest extends TestCase
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_create']);
         $vendor = Vendor::factory()->create();
-        $otherKategori = \App\Models\KategoriItem::factory()->create();
+        $otherKategori = KategoriItem::factory()->create();
 
         $this->actingAs($user);
 
         Livewire::test(PengadaanForm::class)
-            ->set('no_pengadaan', 'PG-2026-002')
+            ->set('no_pesanan_spk', 'SPK-2026-002')
             ->set('nama_pemohon', 'Andi Wijaya')
             ->set('tipe_biaya', 'Fix Cost')
             ->set('klaster_id', $vendor->klaster_id)
             ->set('vendor_id', $vendor->id)
-            ->set('tanggal_pengadaan', now()->format('Y-m-d'))
+            ->set('bisnis_area_id', BisnisArea::factory()->create()->id)
+            ->set('tanggal_pesanan_spk', now()->format('Y-m-d'))
             ->set('items', [
-                ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => $otherKategori->id, 'qty' => 1, 'satuan_id' => \App\Models\Satuan::factory()->create()->id, 'harga_satuan' => '10000000'],
+                ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => $otherKategori->id, 'qty' => 1, 'satuan_id' => Satuan::factory()->create()->id, 'harga_satuan' => '10000000'],
             ])
             ->call('save')
             ->assertHasErrors(['items.0.kategori_item_id']);
@@ -163,14 +169,15 @@ class PengadaanManagementTest extends TestCase
         $this->actingAs($user);
 
         Livewire::test(PengadaanForm::class)
-            ->set('no_pengadaan', 'PG-2026-003')
+            ->set('no_pesanan_spk', 'SPK-2026-003')
             ->set('nama_pemohon', 'Siti Rahayu')
             ->set('tipe_biaya', 'RAB Project')
             ->set('klaster_id', $vendor->klaster_id)
             ->set('vendor_id', $vendor->id)
-            ->set('tanggal_pengadaan', now()->format('Y-m-d'))
+            ->set('bisnis_area_id', BisnisArea::factory()->create()->id)
+            ->set('tanggal_pesanan_spk', now()->format('Y-m-d'))
             ->set('items', [
-                ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => null, 'qty' => 1, 'satuan_id' => \App\Models\Satuan::factory()->create()->id, 'harga_satuan' => '5000000'],
+                ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => null, 'qty' => 1, 'satuan_id' => Satuan::factory()->create()->id, 'harga_satuan' => '5000000'],
             ])
             ->call('save')
             ->assertHasErrors(['nama_project', 'no_wbs'])
@@ -180,7 +187,7 @@ class PengadaanManagementTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('pengadaans', [
-            'no_pengadaan' => 'PG-2026-003',
+            'no_pesanan_spk' => 'SPK-2026-003',
             'tipe_biaya' => 'RAB Project',
             'nama_project' => 'Project Kalibrasi Tahap 1',
             'no_wbs' => 'WBS-PRJ-001',

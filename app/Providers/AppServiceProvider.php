@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\Chat;
 use App\Models\ChatMessage;
@@ -13,6 +14,7 @@ use App\Models\Satuan;
 use App\Models\SystemConfiguration;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Policies\BisnisAreaPolicy;
 use App\Policies\CabangPolicy;
 use App\Policies\ChatPolicy;
 use App\Policies\DashboardPolicy;
@@ -54,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         // Register Policies
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Cabang::class, CabangPolicy::class);
+        Gate::policy(BisnisArea::class, BisnisAreaPolicy::class);
         Gate::policy(Klaster::class, KlasterPolicy::class);
         Gate::policy(SystemConfiguration::class, SystemConfigurationPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);

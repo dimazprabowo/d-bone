@@ -6,6 +6,7 @@ use App\Enums\PaymentApprovalStatus;
 use App\Enums\PengadaanApprovalStatus;
 use App\Enums\TipeBiaya;
 use App\Enums\VendorStatus;
+use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
@@ -34,23 +35,22 @@ class PengadaanSeeder extends Seeder
         $disk = file_disk();
 
         $vendors = Vendor::where('status', VendorStatus::Aktif->value)->get()->keyBy('code');
+
+        $bisnisAreas = BisnisArea::pluck('id', 'name');
         $satuanMap = Satuan::pluck('id', 'code');
         $kategoriMap = KategoriItem::pluck('id', 'name');
-        $priok = Cabang::where('code', 'TGP')->first();
-        $surabaya = Cabang::where('code', 'SBY')->first();
-        $makassar = Cabang::where('code', 'MKS')->first();
-        $belawan = Cabang::where('code', 'BLW')->first();
-        $batam = Cabang::where('code', 'BTM')->first();
+        $jakarta = Cabang::where('code', 'JKT')->first();
 
         // 12 skenario pengadaan yang mencakup semua state:
         // approval (pending/approved/rejected) x invoice (none/partial/full) x payment (none/partial/lunas/pending/rejected)
         $scenarios = [
             // 1. Pending - menunggu approval, ada evidence completed
             [
-                'no' => 'PGD-2025-001',
+                'no' => 'SPK-2025-001',
                 'pemohon' => 'Budi Santoso',
                 'vendor_code' => 'VDR-001',
-                'cabang' => $priok,
+                'bisnis_area' => 'TRL',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(2),
                 'status' => PengadaanApprovalStatus::Pending,
                 'items' => [
@@ -66,9 +66,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 2. Approved - belum ditagih (no invoice)
             [
-                'no' => 'PGD-2025-002',
+                'no' => 'SPK-2025-002',
                 'vendor_code' => 'VDR-002',
-                'cabang' => $surabaya,
+                'bisnis_area' => 'ACY',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(15),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(13),
@@ -83,13 +84,14 @@ class PengadaanSeeder extends Seeder
             ],
             // 3. Approved + invoice partial (ditagih sebagian) + payment approved (sebagian)
             [
-                'no' => 'PGD-2025-003',
+                'no' => 'SPK-2025-003',
                 'pemohon' => 'Andi Wijaya',
                 'tipe_biaya' => TipeBiaya::RabProject,
                 'nama_project' => 'Project Modernisasi Navigasi Kapal',
                 'no_wbs' => 'WBS-PRJ-2025-003',
                 'vendor_code' => 'VDR-003',
-                'cabang' => $priok,
+                'bisnis_area' => 'ENI',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(40),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(38),
@@ -122,9 +124,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 4. Approved + invoice full + payment approved (LUNAS)
             [
-                'no' => 'PGD-2025-004',
+                'no' => 'SPK-2025-004',
                 'vendor_code' => 'VDR-004',
-                'cabang' => $surabaya,
+                'bisnis_area' => 'TKDN & Pemerintahan',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(60),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(58),
@@ -157,9 +160,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 5. Approved + invoice full + payment pending (belum dibayar, butuh approval)
             [
-                'no' => 'PGD-2025-005',
+                'no' => 'SPK-2025-005',
                 'vendor_code' => 'VDR-005',
-                'cabang' => $makassar,
+                'bisnis_area' => 'TKDN & Pemerintahan',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(20),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(18),
@@ -191,9 +195,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 6. Approved + invoice full + payment partial (dibayar sebagian, sisanya belum)
             [
-                'no' => 'PGD-2025-006',
+                'no' => 'SPK-2025-006',
                 'vendor_code' => 'VDR-006',
-                'cabang' => $priok,
+                'bisnis_area' => 'TRL',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(50),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(48),
@@ -225,9 +230,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 7. Rejected (dengan rejection_reason)
             [
-                'no' => 'PGD-2025-007',
+                'no' => 'SPK-2025-007',
                 'vendor_code' => 'VDR-007',
-                'cabang' => $batam,
+                'bisnis_area' => 'ACY',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(10),
                 'status' => PengadaanApprovalStatus::Rejected,
                 'approved_at' => now()->subDays(8),
@@ -241,9 +247,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 8. Approved + invoice overdue (jatuh tempo lewat, belum dibayar sama sekali)
             [
-                'no' => 'PGD-2025-008',
+                'no' => 'SPK-2025-008',
                 'vendor_code' => 'VDR-008',
-                'cabang' => $surabaya,
+                'bisnis_area' => 'ENI',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(75),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(73),
@@ -268,9 +275,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 9. Approved + invoice + payment rejected (perlu re-submit bukti transfer)
             [
-                'no' => 'PGD-2025-009',
+                'no' => 'SPK-2025-009',
                 'vendor_code' => 'VDR-009',
-                'cabang' => $makassar,
+                'bisnis_area' => 'TKDN & Pemerintahan',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(25),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(23),
@@ -303,13 +311,14 @@ class PengadaanSeeder extends Seeder
             ],
             // 10. Approved + multi-item + multi-evidence (kompleks, lunas)
             [
-                'no' => 'PGD-2025-010',
+                'no' => 'SPK-2025-010',
                 'pemohon' => 'Siti Rahayu',
                 'tipe_biaya' => TipeBiaya::RabProject,
                 'nama_project' => 'Project Paket Lab Kalibrasi Priok',
                 'no_wbs' => 'WBS-LAB-2025-010',
                 'vendor_code' => 'VDR-001',
-                'cabang' => $priok,
+                'bisnis_area' => 'TRL',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(90),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(88),
@@ -362,9 +371,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 11. Approved + invoice + multi-payment (lunas, 2x cicil)
             [
-                'no' => 'PGD-2025-011',
+                'no' => 'SPK-2025-011',
                 'vendor_code' => 'VDR-003',
-                'cabang' => $belawan,
+                'bisnis_area' => 'ENI',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDays(45),
                 'status' => PengadaanApprovalStatus::Approved,
                 'approved_at' => now()->subDays(43),
@@ -410,9 +420,10 @@ class PengadaanSeeder extends Seeder
             ],
             // 12. Pending dengan evidence processing (file_status=processing)
             [
-                'no' => 'PGD-2025-012',
+                'no' => 'SPK-2025-012',
                 'vendor_code' => 'VDR-006',
-                'cabang' => $priok,
+                'bisnis_area' => 'TRL',
+                'cabang' => $jakarta,
                 'tanggal' => now()->subDay(),
                 'status' => PengadaanApprovalStatus::Pending,
                 'items' => [
@@ -426,7 +437,7 @@ class PengadaanSeeder extends Seeder
             ],
         ];
 
-        DB::transaction(function () use ($scenarios, $vendors, $satuanMap, $kategoriMap, $admin, $fileStorage, $disk) {
+        DB::transaction(function () use ($scenarios, $vendors, $bisnisAreas, $satuanMap, $kategoriMap, $admin, $fileStorage, $disk) {
             foreach ($scenarios as $scenario) {
                 $vendor = $vendors->get($scenario['vendor_code']);
                 if (! $vendor) {
@@ -450,15 +461,17 @@ class PengadaanSeeder extends Seeder
                 }
 
                 $pengadaan = Pengadaan::firstOrCreate(
-                    ['no_pengadaan' => $scenario['no']],
+                    ['no_pesanan_spk' => $scenario['no']],
                     [
                         'nama_pemohon' => $scenario['pemohon'] ?? $admin->name,
                         'tipe_biaya' => ($scenario['tipe_biaya'] ?? TipeBiaya::FixCost)->value,
                         'nama_project' => $scenario['nama_project'] ?? null,
                         'no_wbs' => $scenario['no_wbs'] ?? null,
                         'vendor_id' => $vendor->id,
+                        'bisnis_area_id' => $bisnisAreas->get($scenario['bisnis_area'] ?? 'TRL'),
                         'cabang_id' => $scenario['cabang']?->id,
-                        'tanggal_pengadaan' => $scenario['tanggal'],
+                        'tanggal_pesanan_spk' => $scenario['tanggal'],
+                        'tanggal_jatuh_tempo' => $scenario['tanggal_jatuh_tempo'] ?? $scenario['tanggal']->copy()->addDays(30),
                         'total_biaya' => $totalBiaya,
                         'status_approval' => $scenario['status']->value,
                         'approved_by' => $scenario['status'] !== PengadaanApprovalStatus::Pending ? $admin->id : null,
@@ -508,10 +521,10 @@ class PengadaanSeeder extends Seeder
                     // lalu tulis file dummy ke disk agar download() bekerja.
                     $path = $fileStorage->buildPath(
                         'pengadaan-evidence',
-                        [$pengadaan->no_pengadaan],
+                        [$pengadaan->no_pesanan_spk],
                         $evidence['name']
                     );
-                    $dummyContent = "Seeded evidence file for {$pengadaan->no_pengadaan}: {$evidence['name']}";
+                    $dummyContent = "Seeded evidence file for {$pengadaan->no_pesanan_spk}: {$evidence['name']}";
                     Storage::disk($disk)->put($path, $dummyContent);
                     $size = strlen($dummyContent);
 

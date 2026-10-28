@@ -1,7 +1,7 @@
 {{--
     Auth Branding Panel - Left/right side panel for guest auth pages.
 
-    D-BONE context: pengadaan barang & jasa & vendor management for PT BKI.
+    D-BONE context: pengadaan barang & jasa for PT BKI.
     Visual: 5-photo diagonal collage as full-bleed background (clip-path polygons),
     blue gradient overlay for text readability. Photos: maritime equipment, port
     operations, and office/business (Unsplash, free license).
@@ -65,10 +65,10 @@
             {{-- Main headline --}}
             <div class="space-y-3 max-w-lg mb-6">
                 <h2 class="text-2xl lg:text-3xl xl:text-4xl font-bold leading-tight">
-                    Pengadaan Barang & Jasa & Vendor
+                    Pengadaan Barang & Jasa
                 </h2>
                 <p class="text-sm lg:text-base text-blue-100 leading-relaxed">
-                    Sistem terintegrasi untuk pengadaan barang & jasa operasional, manajemen vendor,
+                    Sistem terintegrasi untuk pengadaan barang & jasa,
                     penagihan invoice, pembayaran, dan monitoring biaya real-time.
                 </p>
             </div>
@@ -235,18 +235,6 @@
                 <div>
                     <h3 class="font-semibold text-sm text-white">Pengadaan Barang & Jasa</h3>
                     <p class="text-xs text-blue-200">Pengadaan operasional dengan approval workflow</p>
-                </div>
-            </div>
-
-            <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 w-8 h-8 bg-blue-500/25 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-sm text-white">Manajemen Vendor</h3>
-                    <p class="text-xs text-blue-200">Database vendor, riwayat transaksi & performa</p>
                 </div>
             </div>
 

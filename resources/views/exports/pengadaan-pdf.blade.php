@@ -16,21 +16,23 @@
 <table>
     <thead>
         <tr>
-            <th>No</th><th>No. Pengadaan</th><th>Pemohon</th><th>Tipe Biaya</th><th>Project</th><th>No. WBS</th><th>Vendor</th><th>Cabang</th><th>Tanggal</th><th>Item</th><th>Total Biaya</th><th>Status Approval</th><th>Status Invoice</th><th>Status Pembayaran</th>
+            <th>No</th><th>No. Pesanan/SPK</th><th>Pemohon</th><th>Tipe Biaya</th><th>Project</th><th>No. WBS</th><th>Vendor</th><th>Cabang</th><th>Bisnis Area</th><th>Tgl. Pesanan/SPK</th><th>Jatuh Tempo</th><th>Item</th><th>Total Biaya</th><th>Status Approval</th><th>Status Invoice</th><th>Status Pembayaran</th>
         </tr>
     </thead>
     <tbody>
         @foreach($pengadaans as $i => $pengadaan)
         <tr>
             <td>{{ $i + 1 }}</td>
-            <td>{{ $pengadaan->no_pengadaan }}</td>
+            <td>{{ $pengadaan->no_pesanan_spk }}</td>
             <td>{{ $pengadaan->nama_pemohon }}</td>
             <td>{{ $pengadaan->tipe_biaya->label() }}</td>
             <td>{{ $pengadaan->nama_project ?? '-' }}</td>
             <td>{{ $pengadaan->no_wbs ?? '-' }}</td>
             <td>{{ $pengadaan->vendor->name }}</td>
             <td>{{ $pengadaan->cabang->name ?? 'Pusat' }}</td>
-            <td>{{ $pengadaan->tanggal_pengadaan->format('d/m/Y') }}</td>
+            <td>{{ $pengadaan->bisnisArea->name ?? '-' }}</td>
+            <td>{{ $pengadaan->tanggal_pesanan_spk->format('d/m/Y') }}</td>
+            <td>{{ $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-' }}</td>
             <td>{{ $pengadaan->items_count }}</td>
             <td>Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</td>
             <td>{{ $pengadaan->status_approval->label() }}</td>

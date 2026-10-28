@@ -87,14 +87,15 @@ Model: `App\Models\Vendor` — `HasEncryptedRouteKey`, `HasFactory`, `LogsActivi
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | bigint PK | |
-| no_pengadaan | string, unique | Uppercase |
+| no_pesanan_spk | string, unique | Uppercase |
 | nama_pemohon | string | Wajib |
 | tipe_biaya | string enum `TipeBiaya` | `Fix Cost` / `RAB Project` (value = plain text label, disimpan apa adanya) |
 | nama_project | string, nullable | Wajib saat `tipe_biaya = RAB Project` |
 | no_wbs | string, nullable | Wajib saat `tipe_biaya = RAB Project`; dinormalisasi uppercase di Service |
 | vendor_id | FK → vendors | |
 | cabang_id | FK → cabangs, nullable | Untuk data-scoping (reuse pola `access_all_cabang` seperti `AlatService::applyCabangScope`) |
-| tanggal_pengadaan | date | |
+| tanggal_pesanan_spk | date | |
+| tanggal_jatuh_tempo | date, nullable | Jatuh tempo kontrak/SPK; index untuk query reminder/dashboard |
 | total_biaya | decimal(15,2) | **Dihitung otomatis** di Service dari `SUM(pengadaan_items.subtotal)` — JANGAN jadi input manual, cegah inkonsistensi |
 | status_approval | enum `PengadaanApprovalStatus` (pending/approved/rejected) | |
 | approved_by | FK → users, nullable | |
