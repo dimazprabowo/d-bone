@@ -41,7 +41,7 @@ php -l <file>                       # Lint a PHP file
 ### Master Data
 Entities: `Cabang` (branch), `Vendor` (supplier).
 
-### Pengadaan Aset Module
+### Pengadaan Barang & Jasa Module
 Entities: `Pengadaan` (procurement), `PengadaanItem` (procurement line item), `PengadaanEvidence` (procurement documents), `Invoice`, `InvoicePayment`.
 
 ### Workflows

@@ -5,11 +5,12 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
     /**
-     * Struktur role aplikasi pengadaan aset (COE vs Cabang):
+     * Struktur role aplikasi pengadaan barang & jasa (COE vs Cabang):
      *
      * - Super Admin  : bypass semua (Gate::before di AuthServiceProvider), tetap disync semua permission.
      * - Admin Pusat  : COE — akses & kontrol penuh SEMUA cabang (punya `access_all_cabang`).
@@ -22,7 +23,7 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // 1. Super Admin - All permissions (bypass via Gate::before di AuthServiceProvider)
         $superAdmin = Role::firstOrCreate(['name' => 'super admin']);

@@ -65,12 +65,12 @@
     </div>
     @endcanany
 
-    {{-- Pengadaan Aset (gated by pengadaan_view; cabang-scoped via service) --}}
+    {{-- Pengadaan Barang & Jasa (gated by pengadaan_view; cabang-scoped via service) --}}
     @can('pengadaan_view')
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between mb-5">
             <div>
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Pengadaan Aset</h3>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Pengadaan Barang & Jasa</h3>
                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Ringkasan biaya, penagihan & pembayaran</p>
             </div>
             <a href="{{ route('pengadaan.index') }}" wire:navigate
@@ -82,10 +82,10 @@
 
         {{-- Financial Overview: 4 stat cards dengan progress bar --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {{-- Total Biaya Aset --}}
+            {{-- Total Biaya Pengadaan --}}
             <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <div class="flex items-center justify-between">
-                    <p class="text-xs font-medium text-blue-600 dark:text-blue-400">Total Biaya Aset</p>
+                    <p class="text-xs font-medium text-blue-600 dark:text-blue-400">Total Biaya Pengadaan</p>
                     <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
                 <p class="mt-2 text-2xl font-bold text-blue-700 dark:text-blue-300">Rp {{ number_format($pengadaanStats['total_biaya'], 0, ',', '.') }}</p>
@@ -221,12 +221,12 @@
             </div>
         @endif
 
-        {{-- Biaya Aset per Cabang (dengan progress bar relatif, access_all_cabang only) --}}
+        {{-- Biaya Pengadaan per Cabang (dengan progress bar relatif, access_all_cabang only) --}}
         @can('access_all_cabang')
             @if(!empty($pengadaanPerCabang))
                 @php($maxCabangSpend = $pengadaanPerCabang[0]['total_spend'] ?? 1)
                 <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Biaya Aset per Cabang</h4>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Biaya Pengadaan per Cabang</h4>
                     <div class="space-y-3">
                         @foreach($pengadaanPerCabang as $row)
                             <div>

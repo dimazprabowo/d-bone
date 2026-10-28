@@ -33,7 +33,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::view('/vendors', 'master-data.vendors')->middleware('can:vendor_view')->name('vendors');
     });
 
-    // Pengadaan Aset Routes (full-page form for create/edit, route-model-binding with encrypted ID)
+    // Pengadaan Barang & Jasa Routes (full-page form for create/edit, route-model-binding with encrypted ID)
     Route::prefix('pengadaan')->name('pengadaan.')->group(function () {
         Route::view('/', 'pengadaan.index')->middleware('can:pengadaan_view')->name('index');
         Route::view('/create', 'pengadaan.create')->middleware('can:pengadaan_create')->name('create');

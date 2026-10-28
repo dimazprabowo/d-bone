@@ -103,10 +103,10 @@ trait HasMenuItems
             ];
         }
 
-        // Pengadaan Aset
+        // Pengadaan Barang & Jasa
         if ($perms['pengadaan_view']) {
             $items[] = [
-                'name' => 'Pengadaan Aset',
+                'name' => 'Pengadaan Barang & Jasa',
                 'route' => 'pengadaan.index',
                 'icon' => 'shopping-cart',
                 'active' => $req->routeIs('pengadaan.*'),

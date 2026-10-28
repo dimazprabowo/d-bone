@@ -69,7 +69,7 @@ class PermissionSeeder extends Seeder
             'vendor_export_excel',
             'vendor_export_pdf',
 
-            // Pengadaan Aset — Pengadaan (Vendor permissions ada di atas)
+            // Pengadaan Barang & Jasa — Pengadaan (Vendor permissions ada di atas)
             'pengadaan_view',
             'pengadaan_create',
             'pengadaan_update',

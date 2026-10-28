@@ -109,7 +109,7 @@ class RolePermissionService
                 ['name' => 'kategori_item_export_excel', 'label' => 'Export Excel Kategori Item'],
                 ['name' => 'kategori_item_export_pdf',   'label' => 'Export PDF Kategori Item'],
             ],
-            'Pengadaan Aset' => [
+            'Pengadaan Barang & Jasa' => [
                 ['name' => 'vendor_view',         'label' => 'Lihat Vendor'],
                 ['name' => 'vendor_create',       'label' => 'Tambah Vendor'],
                 ['name' => 'vendor_update',       'label' => 'Edit Vendor'],

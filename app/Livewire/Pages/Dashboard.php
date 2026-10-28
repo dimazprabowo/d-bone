@@ -31,7 +31,7 @@ class Dashboard extends Component
                 $data['totalRoles'] = Role::count();
             }
 
-            // Pengadaan Aset stats (biaya, invoice, pembayaran), cabang-scoped via service.
+            // Pengadaan Barang & Jasa stats (biaya, invoice, pembayaran), cabang-scoped via service.
             if (Gate::allows('pengadaan_view')) {
                 $pengadaanService = app(PengadaanService::class);
                 $data['pengadaanStats'] = $pengadaanService->getDashboardStats();

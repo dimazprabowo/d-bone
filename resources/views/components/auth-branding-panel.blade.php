@@ -1,7 +1,7 @@
 {{--
     Auth Branding Panel - Left/right side panel for guest auth pages.
 
-    D-BONE context: pengadaan aset & vendor management for PT BKI.
+    D-BONE context: pengadaan barang & jasa & vendor management for PT BKI.
     Visual: 5-photo diagonal collage as full-bleed background (clip-path polygons),
     blue gradient overlay for text readability. Photos: maritime equipment, port
     operations, and office/business (Unsplash, free license).
@@ -65,10 +65,10 @@
             {{-- Main headline --}}
             <div class="space-y-3 max-w-lg mb-6">
                 <h2 class="text-2xl lg:text-3xl xl:text-4xl font-bold leading-tight">
-                    Pengadaan Aset & Vendor
+                    Pengadaan Barang & Jasa & Vendor
                 </h2>
                 <p class="text-sm lg:text-base text-blue-100 leading-relaxed">
-                    Sistem terintegrasi untuk pengadaan aset operasional, manajemen vendor,
+                    Sistem terintegrasi untuk pengadaan barang & jasa operasional, manajemen vendor,
                     penagihan invoice, pembayaran, dan monitoring biaya real-time.
                 </p>
             </div>
@@ -233,7 +233,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-sm text-white">Pengadaan Aset</h3>
+                    <h3 class="font-semibold text-sm text-white">Pengadaan Barang & Jasa</h3>
                     <p class="text-xs text-blue-200">Pengadaan operasional dengan approval workflow</p>
                 </div>
             </div>

@@ -3,7 +3,7 @@
 <div>
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
-            Item Aset
+            Item Barang & Jasa
             <span class="ml-2 inline-flex items-center whitespace-nowrap px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                 {{ count($items) }} item
             </span>

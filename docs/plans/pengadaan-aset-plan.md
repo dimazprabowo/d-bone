@@ -1,4 +1,4 @@
-# Plan: Modul Pengadaan Aset (Vendor – Biaya – Invoice – Pembayaran – Evidence)
+# Plan: Modul Pengadaan Barang & Jasa (Vendor – Biaya – Invoice – Pembayaran – Evidence)
 
 > **Status:** Disetujui untuk eksekusi (desain final). Belum ada kode yang dibuat.
 > **Dibuat:** 2026-09-07
@@ -28,7 +28,7 @@ Aplikasi ini (d-bone, BKI) sudah punya modul **Alat** (equipment monitoring: kon
 peminjaman) di bawah `Cabang`. Modul baru ini menjawab kebutuhan **finansial-procurement** yang
 belum ada:
 
-- Berapa **total biaya aset** yang dibeli dari tiap vendor?
+- Berapa **total biaya pengadaan** yang dibeli dari tiap vendor?
 - Berapa yang **sudah** ditagih (invoice) vs **belum** ditagih vendor?
 - Berapa yang **sudah dibayar (lunas)**, **dibayar sebagian**, atau **belum dibayar**?
 - Ada bukti dokumen (PO/kontrak, invoice, bukti transfer) di tiap tahap?
@@ -38,9 +38,9 @@ belum ada:
 
 | Keputusan | Pilihan Final | Alasan |
 |---|---|---|
-| Relasi Pengadaan ↔ Aset | 1 Pengadaan bisa berisi **banyak item aset** (fleksibel) | Vendor sering menagih 1 PO untuk banyak unit sekaligus |
+| Relasi Pengadaan ↔ Item | 1 Pengadaan bisa berisi **banyak item barang/jasa** (fleksibel) | Vendor sering menagih 1 PO untuk banyak unit sekaligus |
 | Skema pembayaran | **Termin/bertahap** (banyak `InvoicePayment` per `Invoice`) | Pembayaran ke vendor sering dicicil (DP + pelunasan) |
-| Cakupan modul | **Modul baru "Pengadaan Aset"**, terpisah dari `Alat`, dengan link **opsional** (`alat_id` nullable) ke `Alat` existing | `Alat` adalah domain operasional (kalibrasi/peminjaman); jangan dicampur dengan domain finansial-procurement. Tidak semua aset finansial adalah `Alat` operasional (mis. furniture) |
+| Cakupan modul | **Modul baru "Pengadaan Barang & Jasa"**, terpisah dari `Alat`, dengan link **opsional** (`alat_id` nullable) ke `Alat` existing | `Alat` adalah domain operasional (kalibrasi/peminjaman); jangan dicampur dengan domain finansial-procurement. Tidak semua item finansial adalah `Alat` operasional (mis. furniture) |
 | Approval workflow | **Ada 2 titik approval**: (1) approval `Pengadaan`, (2) approval `InvoicePayment` | Meniru pola `alat_review` yang sudah terbukti. Approval Pengadaan = validasi PO sebelum masuk hitungan biaya. Approval Payment = kontrol finansial sebelum dianggap "sudah dibayar" |
 | Penamaan entity | **"Pengadaan"** (bukan "Purchase Order") | Konsisten dengan istilah Bahasa Indonesia yang sudah dipakai di seluruh app (Alat, Cabang, LogBook) |
 
@@ -58,8 +58,8 @@ Vendor ──1:N──▶ Pengadaan ──1:N──▶ PengadaanItem ──N:1�
 | Relasi | Kardinalitas | Alasan |
 |---|---|---|
 | Vendor → Pengadaan | 1:N | 1 vendor bisa disupply berkali-kali |
-| Pengadaan → PengadaanItem | 1:N | 1 PO/kontrak bisa berisi banyak aset sekaligus |
-| PengadaanItem → Alat | N:1 (nullable) | Link opsional ke aset operasional; jika tidak relevan, cukup nama aset manual |
+| Pengadaan → PengadaanItem | 1:N | 1 PO/kontrak bisa berisi banyak item sekaligus |
+| PengadaanItem → Alat | N:1 (nullable) | Link opsional ke Alat operasional; jika tidak relevan, cukup nama item manual |
 | Pengadaan → Invoice | 1:N | Vendor bisa menagih bertahap (progress billing) |
 | Invoice → InvoicePayment | 1:N | Pembayaran bisa dicicil/termin |
 
@@ -207,7 +207,7 @@ method `label()` dan `badgeClass()` sesuai pola enum lain di `app/Enums/`.
 [Pending] --approve (permission: pengadaan_approve)--> [Approved]
 [Pending] --reject  (permission: pengadaan_approve)--> [Rejected]  (wajib isi rejection_reason)
 ```
-Hanya `Pengadaan` berstatus **Approved** yang dihitung ke total biaya aset di dashboard (data
+Hanya `Pengadaan` berstatus **Approved** yang dihitung ke total biaya pengadaan di dashboard (data
 belum-fix tidak mengotori laporan).
 
 **InvoicePayment:**
@@ -265,7 +265,7 @@ Tambahkan di `Database\Seeders\PermissionSeeder` (lihat struktur existing untuk 
 > Hanya **approve payment** yang dedicated karena itu transisi status finansial kritis.
 
 Tambahkan grouping baru di `App\Services\RolePermissionService::buildPermissionGroups()`:
-grup **"Pengadaan Aset"** berisi permission `vendor_*` dan `pengadaan_*` + `pembayaran_approve`.
+grup **"Pengadaan Barang & Jasa"** berisi permission `vendor_*` dan `pengadaan_*` + `pembayaran_approve`.
 
 ## 8. Policy
 
@@ -289,7 +289,7 @@ Master Data
   ├── Alat (existing)
   └── Vendor (BARU)   -> route: master-data.vendors, gate: vendor_view
 
-Pengadaan Aset (BARU, grup menu baru)
+Pengadaan Barang & Jasa (BARU, grup menu baru)
   └── Pengadaan (list + detail: item, invoice, payment, evidence)
       -> route: pengadaan.index, gate: pengadaan_view
 ```
@@ -299,7 +299,7 @@ Pengadaan Aset (BARU, grup menu baru)
 | Halaman | Pola | Alasan (sesuai rule Form Strategy di `AGENTS.md`) |
 |---|---|---|
 | Vendor CRUD | **Modal** (`@if($showModal)` pattern) | ≤ 7 field sederhana, tanpa nested/file |
-| Pengadaan Create/Edit | **Full-page** | Nested item aset (repeater) + upload evidence → wajib full-page |
+| Pengadaan Create/Edit | **Full-page** | Nested item barang/jasa (repeater) + upload evidence → wajib full-page |
 | Tambah/Edit Invoice | **Modal**, dikelola di dalam Detail Pengadaan | Field sedikit (no invoice, tanggal, jumlah, jatuh tempo, catatan) + 1 upload file — dikelola sebagai sub-record seperti Kalibrasi di bawah Alat |
 | Tambah Payment | **Modal**, dikelola di dalam Detail Invoice/Pengadaan | Sama alasan seperti Invoice |
 | Approve/Reject Pengadaan & Payment | **Action Modal** (pola `x-action-modal`, lihat `AGENTS.md` §"Action Modal Pattern") | Konfirmasi aksi transisi status |
@@ -320,7 +320,7 @@ konvensi: `{app_env}/pengadaan-aset/{no-pengadaan-slug}/{jenis}_{slug}_{YmdHis}.
 
 Tambahkan method di `App\Services\PengadaanService`:
 
-- `getDashboardStats()`: total biaya aset (dari Pengadaan `Approved`), total sudah ditagih vs
+- `getDashboardStats()`: total biaya pengadaan (dari Pengadaan `Approved`), total sudah ditagih vs
   belum ditagih, total sudah dibayar (lunas) vs outstanding (belum dibayar).
 - Breakdown per Vendor (top vendor by spend).
 - Breakdown per Cabang.
@@ -382,7 +382,7 @@ File yang dibuat:
   tidak duplikat)
 - Livewire: full-page form (`PengadaanForm` dengan repeater item + upload evidence), Index, Detail
   page (`PengadaanDetail`)
-- Menu: tambah grup "Pengadaan Aset"
+- Menu: tambah grup "Pengadaan Barang & Jasa"
 - Feature test: create dengan nested item, approve/reject flow
 
 Verifikasi: bisa buat pengadaan multi-item, link ke `Alat` opsional berfungsi, approve/reject
@@ -468,7 +468,7 @@ export Excel/PDF berhasil, filter server-side berfungsi.
     (`AuthenticationTest`, `ProfileTest`, `RegistrationTest`, dll — sisa boilerplate Laravel
     Breeze) gagal karena mereferensikan `Livewire\Volt` yang tidak terinstall di app ini
     (app sudah Livewire-first murni, bukan Volt). Ini pre-existing technical debt, tidak
-    berhubungan dengan modul Pengadaan Aset — perlu dibersihkan/diupdate terpisah oleh tim.
+    berhubungan dengan modul Pengadaan Barang & Jasa — perlu dibersihkan/diupdate terpisah oleh tim.
   - Verifikasi: `migrate:fresh --seed` sukses, `VendorManagementTest` 7/7 pass, Pint bersih untuk
     semua 17 file yang disentuh Fase A.
   - **Selanjutnya:** Fase B (Pengadaan + PengadaanItem + PengadaanEvidence) belum dikerjakan.
@@ -487,9 +487,9 @@ export Excel/PDF berhasil, filter server-side berfungsi.
     tombol delete jika ada pengadaan terkait — pola sama seperti Cabang↔Alat),
     `app/Providers/AppServiceProvider.php` (registrasi `Gate::policy(Pengadaan::class, ...)`),
     `database/seeders/PermissionSeeder.php` (tambah `pengadaan_view/create/update/delete/approve`),
-    `app/Services/RolePermissionService.php` (grup "Vendor" DIGABUNG jadi grup "Pengadaan Aset"
+    `app/Services/RolePermissionService.php` (grup "Vendor" DIGABUNG jadi grup "Pengadaan Barang & Jasa"
     berisi vendor_* + pengadaan_*, sesuai desain §7 plan ini), `app/Livewire/Traits/HasMenuItems.php`
-    (menu baru "Pengadaan Aset" top-level, terpisah dari submenu Master Data), `routes/web.php`
+    (menu baru "Pengadaan Barang & Jasa" top-level, terpisah dari submenu Master Data), `routes/web.php`
     (route `pengadaan.*`), `config/file_upload.php` (tambah field `pengadaan-evidence`),
     `resources/views/components/icon.blade.php` (tambah icon `shopping-cart`, extend bukan bikin
     komponen baru).
@@ -534,7 +534,7 @@ export Excel/PDF berhasil, filter server-side berfungsi.
     `getFiltered()`), `resources/views/livewire/pengadaan/pengadaan-management.blade.php`
     (+sembunyikan tombol delete jika `invoices_count > 0`), `database/seeders/PermissionSeeder.php`
     (+`pembayaran_approve`), `app/Services/RolePermissionService.php` (+label
-    `pembayaran_approve` di grup "Pengadaan Aset"), `config/file_upload.php` (+field `invoice` dan
+    `pembayaran_approve` di grup "Pengadaan Barang & Jasa"), `config/file_upload.php` (+field `invoice` dan
     `invoice-payment`).
   - **Keputusan desain tambahan yang diambil saat eksekusi:**
     1. `PengadaanPolicy::approvePayment()` diotorisasi via Laravel array-policy:
@@ -566,12 +566,12 @@ export Excel/PDF berhasil, filter server-side berfungsi.
     `getSpendPerCabang()` — cabang-scoped seperti `AlatService`), `app/Livewire/Pages/Dashboard.php`
     (+inject `pengadaanStats`/`pengadaanPerVendor`/`pengadaanPerCabang` ke dashboard global, gated
     `pengadaan_view`), `resources/views/livewire/pages/dashboard-stats.blade.php` (+section
-    "Pengadaan Aset": total biaya/belum ditagih/outstanding, invoice jatuh tempo ≤7 hari & overdue,
+    "Pengadaan Barang & Jasa": total biaya/belum ditagih/outstanding, invoice jatuh tempo ≤7 hari & overdue,
     top vendor by spend, breakdown per cabang), `app/Livewire/Pengadaan/PengadaanManagement.php`
     (+`exportExcel()`/`exportPdf()`), `resources/views/livewire/pengadaan/pengadaan-management.blade.php`
     (+tombol Export Excel/PDF), `app/Policies/PengadaanPolicy.php` (+`exportExcel()`/`exportPdf()`),
     `database/seeders/PermissionSeeder.php` (+`pengadaan_export_excel`/`pengadaan_export_pdf`),
-    `app/Services/RolePermissionService.php` (+label export di grup "Pengadaan Aset").
+    `app/Services/RolePermissionService.php` (+label export di grup "Pengadaan Barang & Jasa").
   - **Keputusan desain tambahan yang diambil saat eksekusi:**
     1. **Reminder jatuh tempo** diimplementasikan sebagai **dashboard stat pasif** (`invoice_due_soon`
        ≤7 hari, `invoice_overdue`), **BUKAN** notifikasi email/scheduled command aktif seperti
@@ -593,9 +593,9 @@ export Excel/PDF berhasil, filter server-side berfungsi.
        `status_pembayaran` diakses per baris (kedua accessor cek `relationLoaded('invoices')`).
   - Verifikasi: `migrate:fresh --seed` sukses, `PengadaanDashboardExportTest` 5/5 pass, regresi
     `VendorManagementTest` 7/7, `PengadaanManagementTest` 8/8, `InvoicePaymentTest` 8/8 tetap pass
-    (total 28/28 test module Pengadaan Aset), Pint bersih di seluruh 203 file project (kecuali 1
+    (total 28/28 test module Pengadaan Barang & Jasa), Pint bersih di seluruh 203 file project (kecuali 1
     pre-existing issue tidak terkait di migration lama).
-  - **STATUS AKHIR: Semua 4 fase plan (A/B/C/D) SELESAI.** Modul Pengadaan Aset (Vendor, Pengadaan,
+  - **STATUS AKHIR: Semua 4 fase plan (A/B/C/D) SELESAI.** Modul Pengadaan Barang & Jasa (Vendor, Pengadaan,
     Item, Evidence, Invoice, Payment, Dashboard, Export) sudah lengkap dan production-ready sesuai
     Definition of Done `AGENTS.md`. Peluang penyempurnaan lanjutan (di luar scope plan awal, tidak
     wajib): reminder aktif via email (lihat poin 1 di atas), lock edit Pengadaan setelah ada
