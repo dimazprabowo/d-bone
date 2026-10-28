@@ -1,6 +1,6 @@
 ---
-name: bav-apps
-description: Panduan membangun fitur/aplikasi baru di atas template bav-apps (Laravel 13 + Livewire 4) secara konsisten, clean, permission-first, dan UI elegan.
+name: d-bone
+description: Panduan membangun fitur/aplikasi baru di atas template d-bone (Laravel 13 + Livewire 4) secara konsisten, clean, permission-first, dan UI elegan.
 triggers:
   - user
   - model
@@ -12,7 +12,7 @@ triggers:
 3. System Analyst yang teliti & berorientasi maintainability
 
 # Konteks Aplikasi
-- Ini APLIKASI BARU yang dibangun di atas TEMPLATE "bav-apps".
+- Ini APLIKASI BARU yang dibangun di atas TEMPLATE "d-bone".
 - Database boleh di-reset total. Untuk perubahan schema, LANGSUNG UBAH migration create utama (jangan bikin migration `add_*` baru untuk tabel yang sama), lalu jalankan:
   `php artisan migrate:fresh --seed`
 - **PERHATIKAN NAMA TABEL:** Laravel auto-pluralize nama model ke nama tabel via inflector.
@@ -73,7 +73,7 @@ Pola full-page form:
 4. Tombol Save -> `redirect(route(...), navigate: true)` kembali ke index. Tombol Cancel -> sama.
 5. Index (list) tetap pakai modal HANYA untuk delete confirmation (`x-delete-modal`).
 
-## Layout Full-Page Form (WAJIB ikuti pola bos-apps, JANGAN deviasi)
+## Layout Full-Page Form (WAJIB ikuti pola d-bone, JANGAN deviasi)
 - Root container: `<div wire:key="..." class="w-full">` — **JANGAN** pakai `max-w-*` atau `mx-auto` (form mengambil full width).
 - Main card: `<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm"><div class="p-6">...</div></div>`
 - Grid form: `grid grid-cols-1 md:grid-cols-2 gap-6` (1 kolom mobile, 2 kolom tablet+).
@@ -414,9 +414,9 @@ JANGAN bocorkan pesan exception mentah ke user.
 - Menggunakan `dark:bg-gray-900` untuk input field — WAJIB `dark:bg-gray-700` (konsisten dengan searchable-select & textarea)
 - Membuat action button di tabel tanpa dual-icon loading pattern (icon + spinner) — user tidak melihat feedback loading
 
-# Modal Form Pattern (WAJIB ikuti pola bos-apps)
+# Modal Form Pattern (WAJIB ikuti pola d-bone)
 Untuk modal form (tambah/edit data), JANGAN pakai `<x-modal>` component (yang punya `x-transition`).
-Gunakan pola `@if($showModal)` + `@entangle` + custom HTML seperti bos-apps:
+Gunakan pola `@if($showModal)` + `@entangle` + custom HTML seperti d-bone:
 
 ```blade
 @if($showModal)
@@ -454,11 +454,11 @@ Untuk confirmation modal (delete): pakai `<x-delete-modal>` dengan `confirmMetho
 ```blade
 <x-delete-modal wire:model="showDeleteModal" title="Hapus Data" message="Yakin ingin menghapus?" confirmMethod="delete" />
 ```
-Button confirm di dalam `<x-delete-modal>` sudah pakai plain `<button>` dengan `wire:loading` spinner (pola bos-apps).
+Button confirm di dalam `<x-delete-modal>` sudah pakai plain `<button>` dengan `wire:loading` spinner (pola d-bone).
 
 # Action Modal Pattern (approve/reject/return dll) — WAJIB pakai plain `<button>`, BUKAN `<x-loading-button>`
 Untuk modal yang berisi konfirmasi aksi (approve, reject, return, close, dll), JANGAN pakai `<x-loading-button>` component.
-Gunakan **plain `<button>`** dengan `wire:loading` directive langsung pada spinner SVG (pola bos-apps `<x-action-modal>`).
+Gunakan **plain `<button>`** dengan `wire:loading` directive langsung pada spinner SVG (pola d-bone `<x-action-modal>`).
 
 Alasan: `<x-loading-button>` pakai `wire:loading.class.remove="hidden"` + `wire:loading.class.add="inline-flex"` yang TIDAK reliable
 di Livewire v3 untuk elemen di dalam `@if` block. Plain `<button>` dengan `wire:loading` (default hide/show) lebih simple & reliable.

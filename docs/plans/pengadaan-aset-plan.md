@@ -24,7 +24,7 @@
 
 ## 1. Latar Belakang & Tujuan Bisnis
 
-Aplikasi ini (bav-apps, BKI) sudah punya modul **Alat** (equipment monitoring: kondisi, kalibrasi,
+Aplikasi ini (d-bone, BKI) sudah punya modul **Alat** (equipment monitoring: kondisi, kalibrasi,
 peminjaman) di bawah `Cabang`. Modul baru ini menjawab kebutuhan **finansial-procurement** yang
 belum ada:
 

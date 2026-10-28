@@ -139,7 +139,7 @@ Aplikasi ini mendukung **dual mode operation**:
 ```bash
 # 1. Clone repository (jika dari git)
 git clone <repository-url>
-cd bav-apps
+cd d-bone
 
 # 2. Install dependencies
 composer install
