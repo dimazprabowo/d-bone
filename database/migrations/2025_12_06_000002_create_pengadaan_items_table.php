@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('satuan_id')->constrained('satuans')->restrictOnDelete();
             $table->decimal('harga_satuan', 15, 2);
             $table->decimal('subtotal', 15, 2);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->index('pengadaan_id');

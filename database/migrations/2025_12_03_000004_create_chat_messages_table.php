@@ -18,6 +18,8 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->boolean('is_edited')->default(false);
             $table->boolean('is_deleted')->default(false);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->index(['chat_id', 'created_at']);

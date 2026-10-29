@@ -42,6 +42,11 @@
                 <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">Alasan: {{ $pengadaan->rejection_reason }}</p>
             </div>
         @endif
+
+        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs text-gray-500 dark:text-gray-400">
+            <p>Dibuat oleh {{ $pengadaan->creator->name ?? '-' }} pada {{ $pengadaan->created_at?->format('d/m/Y H:i') }}</p>
+            <p>Terakhir diubah oleh {{ $pengadaan->updater->name ?? '-' }} pada {{ $pengadaan->updated_at?->format('d/m/Y H:i') }}</p>
+        </div>
     </div>
 
     {{-- Item --}}

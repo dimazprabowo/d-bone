@@ -28,6 +28,8 @@ return new class extends Migration
             $table->string('file_error')->nullable();
             $table->timestamp('file_processed_at')->nullable();
 
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->index('invoice_id');

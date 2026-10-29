@@ -14,6 +14,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamp('last_read_at')->nullable();
             $table->timestamp('deleted_at')->nullable(); // per-user soft delete
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->unique(['chat_id', 'user_id']);
