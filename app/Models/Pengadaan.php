@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\JatuhTempoStatus;
 use App\Enums\PengadaanApprovalStatus;
 use App\Enums\StatusInvoicePengadaan;
 use App\Enums\StatusPembayaranPengadaan;
 use App\Enums\TipeBiaya;
+use App\Helpers\ConfigHelper;
 use App\Traits\Blameable;
 use App\Traits\HasEncryptedRouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -159,6 +161,34 @@ class Pengadaan extends Model
      * Status pembayaran derived, agregat dari status pembayaran semua invoice
      * milik pengadaan ini.
      */
+    public function getSaldoBelumBayarAttribute(): float
+    {
+        $invoices = $this->relationLoaded('invoices') ? $this->invoices : $this->invoices()->with('payments')->get();
+
+        if ($invoices->isEmpty()) {
+            return 0.0;
+        }
+
+        return max(0.0, $invoices->sum('jumlah') - $invoices->sum('total_dibayar'));
+    }
+
+    public function getJatuhTempoAlertAttribute(): ?JatuhTempoStatus
+    {
+        if (! $this->tanggal_jatuh_tempo || $this->status_pembayaran === StatusPembayaranPengadaan::Lunas) {
+            return null;
+        }
+
+        if ($this->tanggal_jatuh_tempo->lt(today())) {
+            return JatuhTempoStatus::Lewat;
+        }
+
+        if ($this->tanggal_jatuh_tempo->lte(today()->addDays(ConfigHelper::getJatuhTempoWarningDays()))) {
+            return JatuhTempoStatus::Proses;
+        }
+
+        return JatuhTempoStatus::Aman;
+    }
+
     public function getStatusPembayaranAttribute(): StatusPembayaranPengadaan
     {
         $invoices = $this->relationLoaded('invoices') ? $this->invoices : $this->invoices()->with('payments')->get();

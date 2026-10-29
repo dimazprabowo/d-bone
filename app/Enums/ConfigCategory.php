@@ -8,6 +8,7 @@ enum ConfigCategory: string
     case Threshold = 'threshold';
     case Sla = 'sla';
     case Notification = 'notification';
+    case Pengadaan = 'pengadaan';
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum ConfigCategory: string
             self::Threshold => 'Threshold',
             self::Sla => 'SLA',
             self::Notification => 'Notification',
+            self::Pengadaan => 'Pengadaan',
         };
     }
 

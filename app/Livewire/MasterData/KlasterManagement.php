@@ -5,6 +5,7 @@ namespace App\Livewire\MasterData;
 use App\Enums\KlasterStatus;
 use App\Exports\KlasterExport;
 use App\Livewire\Traits\HasNotification;
+use App\Livewire\Traits\WithSorting;
 use App\Models\Klaster;
 use App\Services\KlasterService;
 use App\Traits\HasDynamicLike;
@@ -17,7 +18,7 @@ use Livewire\WithPagination;
 
 class KlasterManagement extends Component
 {
-    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination;
+    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination, WithSorting;
 
     public $search = '';
 
@@ -250,7 +251,7 @@ class KlasterManagement extends Component
 
     public function render(KlasterService $service)
     {
-        $klasters = $service->getFiltered($this->search, $this->statusFilter);
+        $klasters = $service->getFiltered($this->search, $this->statusFilter, sortField: $this->sortField, sortDirection: $this->sortDirection);
 
         if ($this->filterChanged) {
             $this->notifySuccess("Ditemukan {$klasters->total()} data klaster.");

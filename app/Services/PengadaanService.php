@@ -42,9 +42,11 @@ class PengadaanService
         ?string $vendorFilter = null,
         ?string $cabangFilter = null,
         ?string $statusFilter = null,
-        int $perPage = 15
+        int $perPage = 15,
+        string $sortField = 'tanggal_pesanan_spk',
+        string $sortDirection = 'desc'
     ): LengthAwarePaginator {
-        $query = Pengadaan::with(['vendor', 'cabang', 'bisnisArea', 'approver'])->withCount(['items', 'evidences', 'invoices']);
+        $query = Pengadaan::with(['vendor', 'cabang', 'bisnisArea', 'approver', 'invoices.payments'])->withCount(['items', 'evidences', 'invoices']);
 
         $userCabangId = auth()->check() ? auth()->user()->cabang_id : null;
         $this->applyCabangScope($query, $userCabangId, $cabangFilter);
@@ -67,7 +69,25 @@ class PengadaanService
             $query->where('status_approval', $statusFilter);
         }
 
-        return $query->orderByDesc('tanggal_pesanan_spk')->paginate($perPage);
+        $direction = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
+
+        if ($sortField === 'saldo_belum_bayar' || $sortField === 'status_pembayaran') {
+            $hasInv = 'EXISTS (SELECT 1 FROM invoices i0 WHERE i0.pengadaan_id = pengadaans.id)';
+            $inv = '(SELECT COALESCE(SUM(i2.jumlah), 0) FROM invoices i2 WHERE i2.pengadaan_id = pengadaans.id)';
+            $paid = "(SELECT COALESCE(SUM(ip.jumlah_bayar), 0) FROM invoice_payments ip INNER JOIN invoices i3 ON i3.id = ip.invoice_id WHERE i3.pengadaan_id = pengadaans.id AND ip.status_approval = 'approved')";
+            $expr = $sortField === 'saldo_belum_bayar'
+                ? "CASE WHEN NOT $hasInv THEN -1 ELSE ($inv - $paid) END"
+                : "CASE WHEN NOT $hasInv THEN 0 WHEN $paid <= 0 THEN 1 WHEN $paid >= $inv THEN 3 ELSE 2 END";
+
+            return $query->orderByRaw("$expr $direction")->orderByDesc('id')->paginate($perPage);
+        }
+
+        $sortable = ['no_pesanan_spk', 'tanggal_pesanan_spk', 'tanggal_jatuh_tempo', 'total_biaya', 'status_approval'];
+        $field = in_array($sortField, $sortable, true) ? $sortField : 'tanggal_pesanan_spk';
+
+        return $query->orderBy($field, $direction)
+            ->orderByDesc('id')
+            ->paginate($perPage);
     }
 
     /**

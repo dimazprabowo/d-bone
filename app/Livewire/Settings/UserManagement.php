@@ -8,6 +8,7 @@ use App\Livewire\Traits\HasNotification;
 use App\Models\Cabang;
 use App\Models\User;
 use App\Services\UserService;
+use AppWithSorting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -18,7 +19,7 @@ use Spatie\Permission\Models\Role;
 
 class UserManagement extends Component
 {
-    use AuthorizesRequests, HasNotification, WithPagination;
+    use AppWithSorting, AuthorizesRequests, HasNotification, WithPagination;
 
     protected $paginationTheme = 'tailwind';
 
@@ -492,8 +493,7 @@ class UserManagement extends Component
             $this->roleFilter,
             $this->isActiveFilter !== '' ? $this->isActiveFilter : null,
             $this->approvalStatusFilter !== '' ? $this->approvalStatusFilter : null,
-            perPage: 9999
-        );
+            perPage: 9999, sortField: $this->sortField, sortDirection: $this->sortDirection);
 
         $pdf = Pdf::loadView('exports.users-pdf', ['users' => $users]);
         $pdf->setPaper('a4', 'landscape');
@@ -511,8 +511,7 @@ class UserManagement extends Component
             $this->roleFilter,
             $this->isActiveFilter !== '' ? $this->isActiveFilter : null,
             $this->approvalStatusFilter !== '' ? $this->approvalStatusFilter : null,
-            $this->perPage
-        );
+            $this->perPage, sortField: $this->sortField, sortDirection: $this->sortDirection);
 
         $pendingCount = $service->getPendingApprovalCount();
 

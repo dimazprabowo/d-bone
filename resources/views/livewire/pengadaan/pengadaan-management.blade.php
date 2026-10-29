@@ -51,13 +51,15 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">No. Pesanan/SPK</th>
+                        <x-sortable-th field="no_pesanan_spk" :sort-field="$sortField" :sort-direction="$sortDirection">No. Pesanan/SPK</x-sortable-th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendor</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cabang</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl. Pesanan/SPK</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Biaya</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <x-sortable-th field="tanggal_pesanan_spk" :sort-field="$sortField" :sort-direction="$sortDirection">Tgl. Pesanan/SPK</x-sortable-th>
+                        <x-sortable-th field="tanggal_jatuh_tempo" :sort-field="$sortField" :sort-direction="$sortDirection">Jatuh Tempo</x-sortable-th>
+                        <x-sortable-th field="total_biaya" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Total Biaya</x-sortable-th>
+                        <x-sortable-th field="saldo_belum_bayar" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Saldo Belum Bayar</x-sortable-th>
+                        <x-sortable-th field="status_pembayaran" :sort-field="$sortField" :sort-direction="$sortDirection">Status Bayar</x-sortable-th>
+                        <x-sortable-th field="status_approval" :sort-field="$sortField" :sort-direction="$sortDirection">Status</x-sortable-th>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -78,10 +80,28 @@
                                 <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->tanggal_pesanan_spk->format('d/m/Y') }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-' }}</div>
+                                <div class="text-sm {{ $pengadaan->jatuh_tempo_alert?->textClass() ?? 'text-gray-900 dark:text-white' }}">{{ $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
                                 <div class="text-sm font-semibold text-gray-900 dark:text-white">Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                @if($pengadaan->invoices_count === 0)
+                                    <span class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                                @else
+                                    <div class="text-sm font-semibold {{ $pengadaan->saldo_belum_bayar > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                        Rp {{ number_format($pengadaan->saldo_belum_bayar, 0, ',', '.') }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($pengadaan->invoices_count === 0)
+                                    <span class="text-sm text-gray-400 dark:text-gray-500">Belum ada invoice</span>
+                                @else
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ $pengadaan->status_pembayaran->badgeClass() }}">
+                                        {{ $pengadaan->status_pembayaran->label() }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full {{ $pengadaan->status_approval->badgeClass() }}">
@@ -143,7 +163,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center">
+                            <td colspan="10" class="px-6 py-12 text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/></svg>
                                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Tidak ada pengadaan ditemukan</p>
                             </td>

@@ -4,6 +4,7 @@ namespace App\Livewire\MasterData;
 
 use App\Enums\BisnisAreaStatus;
 use App\Livewire\Traits\HasNotification;
+use App\Livewire\Traits\WithSorting;
 use App\Models\BisnisArea;
 use App\Services\BisnisAreaService;
 use App\Traits\HasDynamicLike;
@@ -15,7 +16,7 @@ use Livewire\WithPagination;
 
 class BisnisAreaManagement extends Component
 {
-    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination;
+    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination, WithSorting;
 
     public $search = '';
 
@@ -208,7 +209,7 @@ class BisnisAreaManagement extends Component
 
     public function render(BisnisAreaService $service)
     {
-        $bisnisAreas = $service->getFiltered($this->search, $this->statusFilter);
+        $bisnisAreas = $service->getFiltered($this->search, $this->statusFilter, sortField: $this->sortField, sortDirection: $this->sortDirection);
 
         return view('livewire.master-data.bisnis-area-management', compact('bisnisAreas'));
     }

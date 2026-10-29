@@ -17,10 +17,6 @@
                     Pemohon: {{ $pengadaan->nama_pemohon }} • Tipe Biaya: {{ $pengadaan->tipe_biaya->label() }}{{ $pengadaan->nama_project ? ' • Project: '.$pengadaan->nama_project : '' }}{{ $pengadaan->no_wbs ? ' • No. WBS: '.$pengadaan->no_wbs : '' }}
                 </p>
             </div>
-            <div class="text-right">
-                <p class="text-xs text-gray-500 dark:text-gray-400">Total Biaya</p>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</p>
-            </div>
         </div>
 
         @if($pengadaan->catatan)
@@ -79,6 +75,17 @@
                         </tr>
                     @endforelse
                 </tbody>
+                @if($pengadaan->items->count() > 0)
+                    <tfoot class="bg-gray-50 dark:bg-gray-900">
+                        <tr class="border-t-2 border-gray-300 dark:border-gray-600">
+                            <td colspan="4" class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-white text-right">Total Biaya</td>
+                            <td class="px-6 py-4 text-base font-bold text-gray-900 dark:text-white text-right whitespace-nowrap">Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400 text-right italic">Harga belum termasuk PPN</td>
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
         </div>
     </div>

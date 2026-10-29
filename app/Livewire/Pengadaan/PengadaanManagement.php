@@ -30,6 +30,10 @@ class PengadaanManagement extends Component
 
     public bool $filterChanged = false;
 
+    public $sortField = 'tanggal_pesanan_spk';
+
+    public $sortDirection = 'desc';
+
     // Delete modal
     public $showDeleteModal = false;
 
@@ -238,10 +242,23 @@ class PengadaanManagement extends Component
         );
     }
 
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+
+        $this->resetPage();
+    }
+
     public function render(PengadaanService $service)
     {
         $pengadaans = $service->getFiltered(
-            $this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter
+            $this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter,
+            sortField: $this->sortField, sortDirection: $this->sortDirection
         );
 
         if ($this->filterChanged) {

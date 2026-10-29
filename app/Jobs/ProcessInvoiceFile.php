@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\PengadaanFileProcessed;
 use App\Models\Invoice;
 use App\Services\FileStorageService;
 use Illuminate\Bus\Queueable;
@@ -61,6 +62,10 @@ class ProcessInvoiceFile implements ShouldQueue
             ]);
 
             throw $e;
+        } finally {
+            if (isset($invoice)) {
+                PengadaanFileProcessed::dispatch($invoice->pengadaan_id, 'invoice', $invoice->file_status ?? 'failed', $this->invoiceId);
+            }
         }
     }
 
@@ -73,6 +78,8 @@ class ProcessInvoiceFile implements ShouldQueue
                 'file_status' => 'failed',
                 'file_error' => $exception->getMessage(),
             ]);
+
+            PengadaanFileProcessed::dispatch($invoice->pengadaan_id, 'invoice', 'failed', $this->invoiceId);
         }
 
         Log::error("ProcessInvoiceFile job failed permanently for invoice #{$this->invoiceId}: {$exception->getMessage()}");

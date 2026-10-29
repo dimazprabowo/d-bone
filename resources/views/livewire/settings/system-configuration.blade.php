@@ -67,6 +67,7 @@
                                     @if($config->category->value === 'threshold') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400
                                     @elseif($config->category->value === 'sla') bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400
                                     @elseif($config->category->value === 'notification') bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400
+                                    @elseif($config->category->value === 'pengadaan') bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400
                                     @else bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400
                                     @endif">
                                     {{ $config->category->label() }}

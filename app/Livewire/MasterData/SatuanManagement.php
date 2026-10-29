@@ -5,6 +5,7 @@ namespace App\Livewire\MasterData;
 use App\Enums\SatuanStatus;
 use App\Exports\SatuanExport;
 use App\Livewire\Traits\HasNotification;
+use App\Livewire\Traits\WithSorting;
 use App\Models\Satuan;
 use App\Services\SatuanService;
 use App\Traits\HasDynamicLike;
@@ -17,7 +18,7 @@ use Livewire\WithPagination;
 
 class SatuanManagement extends Component
 {
-    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination;
+    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination, WithSorting;
 
     public $search = '';
 
@@ -250,7 +251,7 @@ class SatuanManagement extends Component
 
     public function render(SatuanService $service)
     {
-        $satuans = $service->getFiltered($this->search, $this->statusFilter);
+        $satuans = $service->getFiltered($this->search, $this->statusFilter, sortField: $this->sortField, sortDirection: $this->sortDirection);
 
         if ($this->filterChanged) {
             $this->notifySuccess("Ditemukan {$satuans->total()} data satuan.");

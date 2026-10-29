@@ -11,6 +11,7 @@ use App\Services\InvoiceService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -83,6 +84,12 @@ class PengadaanDetail extends Component
             'vendor', 'cabang', 'bisnisArea', 'approver', 'items.satuan', 'items.kategoriItem', 'evidences',
             'invoices.payments.approver',
         ]);
+    }
+
+    #[On('echo-private:pengadaan.{pengadaan.id},PengadaanFileProcessed')]
+    public function refreshFileStatus(): void
+    {
+        $this->loadPengadaan();
     }
 
     public function downloadEvidence($evidenceId, FileStorageService $fileStorage)

@@ -76,6 +76,17 @@ class SystemConfigurationSeeder extends Seeder
                 'is_editable' => true,
                 'is_active' => true,
             ],
+
+            // Pengadaan configurations
+            [
+                'key' => 'pengadaan.jatuh_tempo_warning_days',
+                'category' => 'pengadaan',
+                'value' => '7',
+                'data_type' => 'integer',
+                'description' => 'Jumlah hari sebelum Jatuh Tempo untuk status alert "Proses" (kuning) pada daftar Pengadaan. Lewat tanggal = "Lewat" (merah), lebih dari ambang = "Aman" (hijau).',
+                'is_editable' => true,
+                'is_active' => true,
+            ],
         ];
 
         foreach ($configurations as $config) {

@@ -127,6 +127,15 @@ class ConfigHelper
     }
 
     /**
+     * Ambang hari sebelum jatuh tempo untuk alert "Proses" (kuning)
+     * pada kolom Jatuh Tempo pengadaan.
+     */
+    public static function getJatuhTempoWarningDays(): int
+    {
+        return max(0, (int) SystemConfiguration::get('pengadaan.jatuh_tempo_warning_days', 7));
+    }
+
+    /**
      * Get application name from system configuration
      */
     public static function getAppName(): string

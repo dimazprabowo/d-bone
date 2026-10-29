@@ -16,6 +16,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -25,7 +26,7 @@ class PengadaanForm extends Component
 
     public $pengadaan;
 
-    public $pengadaanId;
+    public $pengadaanId = 0;
 
     public bool $editMode = false;
 
@@ -59,6 +60,16 @@ class PengadaanForm extends Component
 
     // Evidence repeater
     public $evidences = [];
+
+    #[On('echo-private:pengadaan.{pengadaanId},PengadaanFileProcessed')]
+    public function onFileProcessed(array $data): void
+    {
+        foreach ($this->evidences as $index => $evidence) {
+            if (($evidence['id'] ?? null) === ($data['record_id'] ?? null)) {
+                $this->evidences[$index]['file_status'] = $data['status'] ?? null;
+            }
+        }
+    }
 
     public $deletedEvidenceIds = [];
 

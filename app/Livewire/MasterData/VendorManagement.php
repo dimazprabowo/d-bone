@@ -5,6 +5,7 @@ namespace App\Livewire\MasterData;
 use App\Enums\VendorStatus;
 use App\Exports\VendorExport;
 use App\Livewire\Traits\HasNotification;
+use App\Livewire\Traits\WithSorting;
 use App\Models\KategoriItem;
 use App\Models\Klaster;
 use App\Models\Vendor;
@@ -19,7 +20,7 @@ use Livewire\WithPagination;
 
 class VendorManagement extends Component
 {
-    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination;
+    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination, WithSorting;
 
     public $search = '';
 
@@ -314,7 +315,7 @@ class VendorManagement extends Component
 
     public function render(VendorService $service)
     {
-        $vendors = $service->getFiltered($this->search, $this->statusFilter);
+        $vendors = $service->getFiltered($this->search, $this->statusFilter, sortField: $this->sortField, sortDirection: $this->sortDirection);
 
         if ($this->filterChanged) {
             $this->notifySuccess("Ditemukan {$vendors->total()} data vendor.");

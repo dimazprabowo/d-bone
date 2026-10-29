@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\PengadaanFileProcessed;
 use App\Models\PengadaanEvidence;
 use App\Services\FileStorageService;
 use Illuminate\Bus\Queueable;
@@ -61,6 +62,10 @@ class ProcessPengadaanEvidence implements ShouldQueue
             ]);
 
             throw $e;
+        } finally {
+            if (isset($evidence)) {
+                PengadaanFileProcessed::dispatch($evidence->pengadaan_id, 'evidence', $evidence->file_status ?? 'failed', $this->evidenceId);
+            }
         }
     }
 
@@ -73,6 +78,8 @@ class ProcessPengadaanEvidence implements ShouldQueue
                 'file_status' => 'failed',
                 'file_error' => $exception->getMessage(),
             ]);
+
+            PengadaanFileProcessed::dispatch($evidence->pengadaan_id, 'evidence', 'failed', $this->evidenceId);
         }
 
         Log::error("ProcessPengadaanEvidence job failed permanently for evidence #{$this->evidenceId}: {$exception->getMessage()}");

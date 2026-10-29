@@ -16,7 +16,9 @@ class VendorService
     public function getFiltered(
         ?string $search = null,
         ?string $statusFilter = null,
-        int $perPage = 15
+        int $perPage = 15,
+        ?string $sortField = 'name',
+        ?string $sortDirection = 'asc'
     ): LengthAwarePaginator {
         $query = Vendor::with('klaster')->withCount(['pengadaans', 'kategoriItems']);
 
@@ -35,7 +37,11 @@ class VendorService
             $query->where('status', $statusFilter);
         }
 
-        return $query->orderBy('name')->paginate($perPage);
+        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
+        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
+        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+
+        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
     }
 
     public function create(array $data, array $kategoriItemIds = []): Vendor

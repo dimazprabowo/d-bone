@@ -5,6 +5,7 @@ namespace App\Livewire\MasterData;
 use App\Enums\KategoriItemStatus;
 use App\Exports\KategoriItemExport;
 use App\Livewire\Traits\HasNotification;
+use App\Livewire\Traits\WithSorting;
 use App\Models\KategoriItem;
 use App\Services\KategoriItemService;
 use App\Traits\HasDynamicLike;
@@ -17,7 +18,7 @@ use Livewire\WithPagination;
 
 class KategoriItemManagement extends Component
 {
-    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination;
+    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination, WithSorting;
 
     public $search = '';
 
@@ -248,7 +249,7 @@ class KategoriItemManagement extends Component
 
     public function render(KategoriItemService $service)
     {
-        $kategoriItems = $service->getFiltered($this->search, $this->statusFilter);
+        $kategoriItems = $service->getFiltered($this->search, $this->statusFilter, sortField: $this->sortField, sortDirection: $this->sortDirection);
 
         if ($this->filterChanged) {
             $this->notifySuccess("Ditemukan {$kategoriItems->total()} data kategori item.");
