@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\PaymentApprovalStatus;
 use App\Enums\PengadaanApprovalStatus;
 use App\Enums\TipeBiaya;
 use App\Enums\VendorStatus;
@@ -17,7 +16,9 @@ use App\Models\PengadaanItem;
 use App\Models\Satuan;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\ApprovalService;
 use App\Services\FileStorageService;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -72,7 +73,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(15),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(13),
                 'items' => [
                     ['nama_item' => 'Caliper Digital Mitutoyo 500-196-30', 'kategori' => 'Alat Ukur Dimensi', 'qty' => 3, 'satuan' => 'unit', 'harga' => 4200000],
                 ],
@@ -94,7 +94,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(40),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(38),
                 'items' => [
                     ['nama_item' => 'Marine GPS Chartplotter Garmin', 'kategori' => 'Marine Electronics', 'qty' => 1, 'satuan' => 'unit', 'harga' => 25000000],
                     ['nama_item' => 'VHF Marine Radio Standard Horizon', 'kategori' => 'Marine Electronics', 'qty' => 2, 'satuan' => 'unit', 'harga' => 3500000],
@@ -114,8 +113,6 @@ class PengadaanSeeder extends Seeder
                                 'tanggal_bayar' => now()->subDays(30),
                                 'jumlah_bayar' => 10000000,
                                 'metode' => 'Transfer Bank BCA',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(28),
                             ],
                         ],
                     ],
@@ -130,7 +127,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(60),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(58),
                 'items' => [
                     ['nama_item' => 'Thermohygrometer Testo 608-H1', 'kategori' => 'Alat Ukur Lingkungan', 'qty' => 4, 'satuan' => 'unit', 'harga' => 3200000],
                 ],
@@ -150,8 +146,6 @@ class PengadaanSeeder extends Seeder
                                 'tanggal_bayar' => now()->subDays(30),
                                 'jumlah_bayar' => 12800000,
                                 'metode' => 'Transfer Bank Mandiri',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(28),
                             ],
                         ],
                     ],
@@ -166,7 +160,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(20),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(18),
                 'items' => [
                     ['nama_item' => 'Bor Listrik Bosch GSB 13 RE', 'kategori' => 'Power Tools', 'qty' => 6, 'satuan' => 'unit', 'harga' => 1850000],
                     ['nama_item' => 'Gerinda Tangan Makita 9555H', 'kategori' => 'Power Tools', 'qty' => 4, 'satuan' => 'unit', 'harga' => 1400000],
@@ -186,7 +179,6 @@ class PengadaanSeeder extends Seeder
                                 'tanggal_bayar' => now()->subDays(2),
                                 'jumlah_bayar' => 16700000,
                                 'metode' => 'Transfer Bank BRI',
-                                'status' => PaymentApprovalStatus::Pending,
                             ],
                         ],
                     ],
@@ -201,7 +193,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(50),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(48),
                 'items' => [
                     ['nama_item' => 'Clamp Meter Fluke 376 FC', 'kategori' => 'Alat Ukur Listrik', 'qty' => 2, 'satuan' => 'unit', 'harga' => 9500000],
                 ],
@@ -220,8 +211,6 @@ class PengadaanSeeder extends Seeder
                                 'tanggal_bayar' => now()->subDays(40),
                                 'jumlah_bayar' => 9500000,
                                 'metode' => 'Transfer Bank BCA',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(38),
                             ],
                         ],
                     ],
@@ -236,8 +225,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(10),
                 'status' => PengadaanApprovalStatus::Rejected,
-                'approved_at' => now()->subDays(8),
-                'rejection_reason' => 'Anggaran Q1 sudah habis, mohon diajukan ulang di Q2.',
                 'items' => [
                     ['nama_item' => 'Pressure Gauge WIKA 232.50 (Replacement)', 'kategori' => 'Alat Ukur Tekanan', 'qty' => 1, 'satuan' => 'unit', 'harga' => 1800000],
                 ],
@@ -253,7 +240,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(75),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(73),
                 'items' => [
                     ['nama_item' => 'Helm Safety SNI (Pack 10pcs)', 'kategori' => 'Safety Equipment', 'qty' => 10, 'satuan' => 'pack', 'harga' => 1500000],
                     ['nama_item' => 'Safety Shoes Steel Toe', 'kategori' => 'Safety Equipment', 'qty' => 20, 'satuan' => 'pasang', 'harga' => 650000],
@@ -281,7 +267,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(25),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(23),
                 'items' => [
                     ['nama_item' => 'Trolley Hydraulic 2 Ton', 'kategori' => 'Material Handling', 'qty' => 2, 'satuan' => 'unit', 'harga' => 7500000],
                 ],
@@ -300,9 +285,6 @@ class PengadaanSeeder extends Seeder
                                 'tanggal_bayar' => now()->subDays(5),
                                 'jumlah_bayar' => 15000000,
                                 'metode' => 'Transfer Bank BNI',
-                                'status' => PaymentApprovalStatus::Rejected,
-                                'approved_at' => now()->subDays(3),
-                                'rejection_reason' => 'Bukti transfer tidak terlampir, mohon upload ulang.',
                             ],
                         ],
                     ],
@@ -321,7 +303,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(90),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(88),
                 'items' => [
                     ['nama_item' => 'Multimeter Digital Fluke 87V', 'kategori' => 'Alat Ukur Listrik', 'qty' => 1, 'satuan' => 'unit', 'harga' => 8500000],
                     ['nama_item' => 'Caliper Digital Mitutoyo 500-196-30', 'kategori' => 'Alat Ukur Dimensi', 'qty' => 1, 'satuan' => 'unit', 'harga' => 4200000],
@@ -345,24 +326,20 @@ class PengadaanSeeder extends Seeder
                                 'tanggal_bayar' => now()->subDays(80),
                                 'jumlah_bayar' => 10000000,
                                 'metode' => 'Transfer Bank BCA',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(78),
                             ],
                         ],
                     ],
                     [
                         'no' => 'INV-SAT-2025-010-B',
                         'tanggal' => now()->subDays(50),
-                        'jumlah' => 11000000,
+                        'jumlah' => 10700000,
                         'jatuh_tempo' => now()->subDays(20),
                         'catatan' => 'Invoice tahap 2 (pelunasan).',
                         'payments' => [
                             [
                                 'tanggal_bayar' => now()->subDays(45),
-                                'jumlah_bayar' => 11000000,
+                                'jumlah_bayar' => 10700000,
                                 'metode' => 'Transfer Bank BCA',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(43),
                             ],
                         ],
                     ],
@@ -377,7 +354,6 @@ class PengadaanSeeder extends Seeder
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(45),
                 'status' => PengadaanApprovalStatus::Approved,
-                'approved_at' => now()->subDays(43),
                 'items' => [
                     ['nama_item' => 'Oscilloscope Rigol DS1054Z', 'kategori' => 'Alat Ukur Elektronik', 'qty' => 1, 'satuan' => 'unit', 'harga' => 12000000],
                 ],
@@ -396,22 +372,16 @@ class PengadaanSeeder extends Seeder
                                 'tanggal_bayar' => now()->subDays(35),
                                 'jumlah_bayar' => 4000000,
                                 'metode' => 'Transfer Bank Mandiri',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(33),
                             ],
                             [
                                 'tanggal_bayar' => now()->subDays(20),
                                 'jumlah_bayar' => 4000000,
                                 'metode' => 'Transfer Bank Mandiri',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(18),
                             ],
                             [
                                 'tanggal_bayar' => now()->subDays(5),
                                 'jumlah_bayar' => 4000000,
                                 'metode' => 'Transfer Bank Mandiri',
-                                'status' => PaymentApprovalStatus::Approved,
-                                'approved_at' => now()->subDays(3),
                             ],
                         ],
                     ],
@@ -475,11 +445,15 @@ class PengadaanSeeder extends Seeder
                         'total_biaya' => $totalBiaya,
                         'status_approval' => $scenario['status']->value,
                         'approved_by' => $scenario['status'] !== PengadaanApprovalStatus::Pending ? $admin->id : null,
-                        'approved_at' => $scenario['approved_at'] ?? null,
-                        'rejection_reason' => $scenario['rejection_reason'] ?? null,
                         'catatan' => $scenario['catatan'] ?? null,
                     ]
                 );
+
+                // Simulasikan approval instance via engine — hasilnya instances,
+                // steps, pivot approvers, dan action history seperti diisi real user.
+                if ($pengadaan->wasRecentlyCreated) {
+                    $this->simulateApproval($pengadaan, $scenario, $admin);
+                }
 
                 // Items
                 foreach ($itemsData as $itemData) {
@@ -566,10 +540,6 @@ class PengadaanSeeder extends Seeder
                                 ],
                                 [
                                     'metode_bayar' => $paymentData['metode'] ?? null,
-                                    'status_approval' => $paymentData['status']->value,
-                                    'approved_by' => $paymentData['status'] === PaymentApprovalStatus::Approved ? $admin->id : null,
-                                    'approved_at' => $paymentData['approved_at'] ?? null,
-                                    'rejection_reason' => $paymentData['rejection_reason'] ?? null,
                                     'file_status' => null, // seeder tidak upload bukti transfer fisik
                                 ]
                             );
@@ -578,5 +548,71 @@ class PengadaanSeeder extends Seeder
                 }
             }
         });
+    }
+
+    /**
+     * Simulasikan lifecycle approval via engine — menghasilkan instance,
+     * snapshot steps, pivot approvers, dan action history yang realistis
+     * (timestamp dimundurkan mengikuti tanggal skenario).
+     */
+    private function simulateApproval(Pengadaan $pengadaan, array $scenario, User $admin): void
+    {
+        $service = app(ApprovalService::class);
+        $target = $scenario['status'];
+
+        $submittedAt = Carbon::parse($scenario['tanggal'])->copy()->setTime(9, 0);
+        $instance = $service->submit($pengadaan, $admin);
+
+        if (! $instance) {
+            return;
+        }
+
+        // Backdate submit
+        $instance->update(['created_at' => $submittedAt, 'updated_at' => $submittedAt]);
+        $instance->actions()->oldest('id')->first()?->update([
+            'created_at' => $submittedAt,
+            'updated_at' => $submittedAt,
+        ]);
+
+        $at = $submittedAt->copy();
+        $lastPosition = $instance->steps->max('position');
+        // Pending: hanya jalankan step pertama agar terlihat "sedang diproses"
+        $maxStepsToComplete = $target === PengadaanApprovalStatus::Pending ? 1 : PHP_INT_MAX;
+        $completed = 0;
+
+        while ($instance->refresh()->isInProgress() && $completed < $maxStepsToComplete) {
+            $step = $instance->currentStep()->with('approvers')->first();
+
+            if (! $step) {
+                break;
+            }
+
+            $at->addDays(2)->setTime(10 + $step->position, 15);
+
+            // Target rejected → approve step-step awal, reject di step terakhir
+            if ($target === PengadaanApprovalStatus::Rejected && $step->position === $lastPosition) {
+                $service->reject($instance->refresh(), $step->approvers->first(), $scenario['rejection_reason'] ?? 'Ditolak oleh approver.');
+                break;
+            }
+
+            $needed = $step->mode->value === 'all' ? $step->approvers->count() : 1;
+
+            foreach ($step->approvers->take($needed) as $approver) {
+                $service->approve($instance->refresh(), $approver);
+                $instance->actions()->latest('id')->first()?->update([
+                    'created_at' => $at,
+                    'updated_at' => $at,
+                ]);
+            }
+
+            $completed++;
+        }
+
+        // Samakan timestamp akhir dengan skenario (approved_at bisa berbeda hari)
+        $finalAt = $scenario['approved_at'] ?? $at;
+        $instance->update(['completed_at' => $instance->completed_at ? $finalAt : null]);
+
+        if ($target !== PengadaanApprovalStatus::Pending) {
+        }
     }
 }

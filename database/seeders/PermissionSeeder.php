@@ -83,7 +83,10 @@ class PermissionSeeder extends Seeder
             'pengadaan_approve',
             'pengadaan_export_excel',
             'pengadaan_export_pdf',
-            'pembayaran_approve',
+            'approval_flow_view',
+            'approval_flow_create',
+            'approval_flow_update',
+            'approval_flow_delete',
 
             // Konfigurasi System
             'configuration_view',

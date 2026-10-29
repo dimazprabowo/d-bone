@@ -146,7 +146,7 @@
 
                         <div x-ref="menuContainer"
                              @scroll="checkScroll()"
-                             class="flex items-center overflow-x-auto navbar-scroll px-4"
+                             class="flex items-center overflow-x-auto custom-scrollbar custom-scrollbar navbar-scroll px-4"
                              :class="{ 'px-2': !showLeftArrow && !showRightArrow }">
                             <div class="flex items-center space-x-1 min-w-max py-1">
                             @foreach($menuItems as $item)

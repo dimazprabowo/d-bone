@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\PaymentApprovalStatus;
 use App\Jobs\ProcessInvoiceFile;
 use App\Jobs\ProcessInvoicePaymentFile;
 use App\Models\Invoice;
@@ -99,7 +98,6 @@ class InvoiceService
                 'jumlah_bayar' => $data['jumlah_bayar'],
                 'metode_bayar' => $data['metode_bayar'] ?? null,
                 'catatan' => $data['catatan'] ?? null,
-                'status_approval' => PaymentApprovalStatus::Pending->value,
                 'file_status' => $file ? 'processing' : null,
             ]);
 
@@ -146,34 +144,6 @@ class InvoiceService
         DB::transaction(function () use ($payment) {
             app(FileStorageService::class)->delete($payment->file_path);
             $payment->delete();
-        });
-    }
-
-    public function approvePayment(InvoicePayment $payment, int $approverId): InvoicePayment
-    {
-        return DB::transaction(function () use ($payment, $approverId) {
-            $payment->update([
-                'status_approval' => PaymentApprovalStatus::Approved->value,
-                'approved_by' => $approverId,
-                'approved_at' => now(),
-                'rejection_reason' => null,
-            ]);
-
-            return $payment->fresh();
-        });
-    }
-
-    public function rejectPayment(InvoicePayment $payment, int $approverId, string $reason): InvoicePayment
-    {
-        return DB::transaction(function () use ($payment, $approverId, $reason) {
-            $payment->update([
-                'status_approval' => PaymentApprovalStatus::Rejected->value,
-                'approved_by' => $approverId,
-                'approved_at' => now(),
-                'rejection_reason' => $reason,
-            ]);
-
-            return $payment->fresh();
         });
     }
 }

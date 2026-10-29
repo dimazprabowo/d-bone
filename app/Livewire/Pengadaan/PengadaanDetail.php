@@ -8,6 +8,7 @@ use App\Models\InvoicePayment;
 use App\Models\Pengadaan;
 use App\Services\FileStorageService;
 use App\Services\InvoiceService;
+use App\Services\PengadaanService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Str;
@@ -63,14 +64,14 @@ class PengadaanDetail extends Component
 
     public ?int $deletePaymentId = null;
 
-    // Payment approve/reject modal state
-    public bool $showApprovePaymentModal = false;
+    // Pengadaan approval modal state
+    public bool $showApprovePengadaanModal = false;
 
-    public bool $showRejectPaymentModal = false;
+    public bool $showRejectPengadaanModal = false;
 
-    public ?int $reviewingPaymentId = null;
+    public $approval_note;
 
-    public $pay_rejection_reason;
+    public $pengadaan_rejection_reason;
 
     public function mount(Pengadaan $pengadaan): void
     {
@@ -82,8 +83,83 @@ class PengadaanDetail extends Component
     {
         $this->pengadaan = $this->pengadaan->fresh([
             'vendor', 'cabang', 'bisnisArea', 'approver', 'creator', 'updater', 'items.satuan', 'items.kategoriItem', 'evidences',
-            'invoices.payments.approver',
+            'invoices.payments',
+            'latestApprovalInstance.steps.approvers',
+            'latestApprovalInstance.steps.actions.user',
         ]);
+    }
+
+    public function getActiveApprovalProperty()
+    {
+        return $this->pengadaan->approvalInstances()
+            ->where('status', 'in_progress')
+            ->with('steps.approvers', 'steps.actions.user')
+            ->latest()
+            ->first();
+    }
+
+    public function getLatestApprovalProperty()
+    {
+        return $this->pengadaan->latestApprovalInstance;
+    }
+
+    public function openApprovePengadaanModal(): void
+    {
+        $this->showApprovePengadaanModal = true;
+    }
+
+    public function openRejectPengadaanModal(): void
+    {
+        $this->showRejectPengadaanModal = true;
+    }
+
+    public function approvePengadaan(PengadaanService $service): void
+    {
+        $this->authorize('approve', $this->pengadaan);
+
+        try {
+            $service->approve($this->pengadaan, auth()->id(), $this->approval_note);
+            $this->notifySuccess('Pengadaan disetujui pada tahap ini.');
+            $this->reset(['showApprovePengadaanModal', 'approval_note']);
+            $this->loadPengadaan();
+        } catch (\Exception $e) {
+            report($e);
+            $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
+        }
+    }
+
+    public function rejectPengadaan(PengadaanService $service): void
+    {
+        $this->authorize('approve', $this->pengadaan);
+
+        $this->validate(
+            ['pengadaan_rejection_reason' => 'required|string|max:1000'],
+            ['pengadaan_rejection_reason.required' => 'Alasan penolakan wajib diisi.']
+        );
+
+        try {
+            $service->reject($this->pengadaan, auth()->id(), $this->pengadaan_rejection_reason);
+            $this->notifySuccess('Pengadaan ditolak.');
+            $this->reset(['showRejectPengadaanModal', 'pengadaan_rejection_reason']);
+            $this->loadPengadaan();
+        } catch (\Exception $e) {
+            report($e);
+            $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
+        }
+    }
+
+    public function resubmitPengadaan(PengadaanService $service): void
+    {
+        $this->authorize('update', $this->pengadaan);
+
+        try {
+            $service->resubmit($this->pengadaan, auth()->user());
+            $this->notifySuccess('Pengadaan diajukan ulang dengan alur persetujuan terbaru.');
+            $this->loadPengadaan();
+        } catch (\Exception $e) {
+            report($e);
+            $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
+        }
     }
 
     #[On('echo-private:pengadaan.{pengadaan.id},PengadaanFileProcessed')]
@@ -436,67 +512,6 @@ class PengadaanDetail extends Component
     // ============================================================
     // Payment Approve/Reject
     // ============================================================
-
-    public function confirmApprovePayment(int $paymentId): void
-    {
-        $payment = InvoicePayment::whereHas('invoice', fn ($q) => $q->where('pengadaan_id', $this->pengadaan->id))
-            ->findOrFail($paymentId);
-        $this->authorize('approvePayment', [$this->pengadaan, $payment]);
-
-        $this->reviewingPaymentId = $paymentId;
-        $this->showApprovePaymentModal = true;
-    }
-
-    public function approvePayment(InvoiceService $service): void
-    {
-        try {
-            $payment = InvoicePayment::whereHas('invoice', fn ($q) => $q->where('pengadaan_id', $this->pengadaan->id))
-                ->findOrFail($this->reviewingPaymentId);
-            $this->authorize('approvePayment', [$this->pengadaan, $payment]);
-
-            $service->approvePayment($payment, auth()->id());
-            $this->notifySuccess('Pembayaran berhasil disetujui!');
-            $this->showApprovePaymentModal = false;
-            $this->loadPengadaan();
-        } catch (AuthorizationException $e) {
-            $this->notifyError('Anda tidak memiliki izin untuk menyetujui pembayaran ini.');
-        } catch (\Exception $e) {
-            $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
-        }
-    }
-
-    public function confirmRejectPayment(int $paymentId): void
-    {
-        $payment = InvoicePayment::whereHas('invoice', fn ($q) => $q->where('pengadaan_id', $this->pengadaan->id))
-            ->findOrFail($paymentId);
-        $this->authorize('approvePayment', [$this->pengadaan, $payment]);
-
-        $this->reviewingPaymentId = $paymentId;
-        $this->pay_rejection_reason = '';
-        $this->showRejectPaymentModal = true;
-    }
-
-    public function rejectPayment(InvoiceService $service): void
-    {
-        $this->validate(['pay_rejection_reason' => 'required|string|max:1000'], [
-            'pay_rejection_reason.required' => 'Alasan penolakan wajib diisi.',
-        ]);
-
-        try {
-            $payment = InvoicePayment::whereHas('invoice', fn ($q) => $q->where('pengadaan_id', $this->pengadaan->id))
-                ->findOrFail($this->reviewingPaymentId);
-            $this->authorize('approvePayment', [$this->pengadaan, $payment]);
-
-            $service->rejectPayment($payment, auth()->id(), $this->pay_rejection_reason);
-            $this->notifySuccess('Pembayaran telah ditolak.');
-            $this->showRejectPaymentModal = false;
-            $this->loadPengadaan();
-        } catch (AuthorizationException $e) {
-            $this->notifyError('Anda tidak memiliki izin untuk menolak pembayaran ini.');
-        } catch (\Exception $e) {
-            $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
-        }
-    }
 
     public function render()
     {

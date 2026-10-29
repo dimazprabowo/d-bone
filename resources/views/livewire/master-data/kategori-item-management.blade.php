@@ -40,7 +40,7 @@
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto custom-scrollbar custom-scrollbar">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
@@ -141,7 +141,7 @@
     </div>
 
     @if($showModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar" x-data="{ show: @entangle('showModal') }">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.closeModal()"></div>
 

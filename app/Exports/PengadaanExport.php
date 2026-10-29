@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Pengadaan;
+use App\Services\PengadaanService;
 use App\Traits\HasDynamicLike;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -27,12 +28,15 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
 
     protected ?string $statusFilter;
 
-    public function __construct(?string $search = null, ?string $vendorFilter = null, ?string $cabangFilter = null, ?string $statusFilter = null)
+    protected array $filters;
+
+    public function __construct(?string $search = null, ?string $vendorFilter = null, ?string $cabangFilter = null, ?string $statusFilter = null, array $filters = [])
     {
         $this->search = $search;
         $this->vendorFilter = $vendorFilter;
         $this->cabangFilter = $cabangFilter;
         $this->statusFilter = $statusFilter;
+        $this->filters = $filters;
     }
 
     public function query(): Builder
@@ -64,6 +68,8 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
             $query->where('status_approval', $this->statusFilter);
         }
 
+        app(PengadaanService::class)->applyAdvancedFilters($query, $this->filters);
+
         return $query->orderByDesc('tanggal_pesanan_spk');
     }
 
@@ -83,6 +89,8 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
             'Tanggal Jatuh Tempo',
             'Jumlah Item',
             'Total Biaya',
+            'Total Dibayar',
+            'Saldo Belum Bayar',
             'Status Approval',
             'Status Invoice',
             'Status Pembayaran',
@@ -108,6 +116,8 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
             $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-',
             $pengadaan->items_count,
             $pengadaan->total_biaya,
+            $pengadaan->invoices->sum(fn ($inv) => $inv->total_dibayar),
+            $pengadaan->saldo_belum_bayar,
             $pengadaan->status_approval->label(),
             $pengadaan->status_invoice->label(),
             $pengadaan->status_pembayaran->label(),

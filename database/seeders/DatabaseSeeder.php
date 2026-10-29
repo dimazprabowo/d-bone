@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             VendorSeeder::class,
             SystemConfigurationSeeder::class,
             UserSeeder::class,
+            ApprovalFlowSeeder::class,
             PengadaanSeeder::class,
         ]);
     }

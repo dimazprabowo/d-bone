@@ -505,3 +505,24 @@ Pattern lengkap (copy-paste, ganti method name & warna):
 
 Untuk form submit (reject dengan alasan wajib): bungkus dalam `<form wire:submit="rejectReview">` dan pakai `type="submit"` di button.
 Warna button: `bg-emerald-600` (approve/success), `bg-red-600` (reject/danger), `bg-blue-600` (info/primary).
+
+# Custom Scrollbar (WAJIB dipakai di semua area scroll)
+- CSS `.custom-scrollbar` sudah tersedia di `resources/css/app.css` (light + `.dark` aware, gradient biru tipis + halus).
+- Page-level scrollbar sudah distyle otomatis via selector `html`.
+- WAJIB tambahkan class `custom-scrollbar` ke container yang scrollable: `overflow-x-auto` (tabel), `overflow-y-auto` (sidebar, dropdown panel, modal body panjang, chat). Sudah diterapkan di seluruh `resources/views`.
+- `.navbar-scroll` = scrollbar tersembunyi untuk bar horizontal (tabs/nav pills yang digeser).
+
+# Blameable — created_by / updated_by (WAJIB di semua tabel entity)
+- Trait `App\Traits\Blameable` otomatis mengisi `created_by`/`updated_by` (FK users, nullOnDelete) pada create/update.
+- Migration entity WAJIB sertakan kedua kolom nullable constrained users.
+- Relasi `creator()` / `updater()` tersedia — gunakan untuk tampilan "dibuat oleh / diubah oleh" di detail page & audit; eager load bila dipakai di list.
+
+# Sorting di Index (WAJIB pola ini)
+- `sortBy($field)` di Component: toggle asc/desc + `resetPage()`.
+- Di Service `getFiltered()`: WHITELIST field sortable (`in_array($sortField, $sortable, true)`, fallback default) — JANGAN langsung pakai input user ke orderBy.
+- Sorting pada kolom derived/agregat: pakai `orderByRaw` dengan ekspresi subquery (lihat `saldo_belum_bayar`/`status_pembayaran` di PengadaanService) — bukan sort di PHP.
+- Header kolom sortable tampilkan indikator panah asc/desc.
+
+# Dropdown Flip Positioning (WAJIB untuk dropdown/popover custom)
+- Dropdown yang membuka ke bawah WAJIB deteksi ruang viewport: jika `spaceBelow < tinggiDropdown` DAN `spaceAbove > spaceBelow` → render dengan `bottom-full mb-2`, selain itu `top-full mt-2`.
+- Pola ada di `<x-date-picker>` (`dropUp` + `checkPosition()` via `getBoundingClientRect`, re-check `@scroll.window`) dan `<x-filter-popover>` — pakai ulang pola yang sama, jangan bikin varian lain.

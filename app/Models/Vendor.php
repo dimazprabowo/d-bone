@@ -48,7 +48,7 @@ class Vendor extends Model
 
     public function klaster(): BelongsTo
     {
-        return $this->belongsTo(Klaster::class);
+        return $this->belongsTo(Klaster::class)->withTrashed();
     }
 
     public function kategoriItems(): BelongsToMany

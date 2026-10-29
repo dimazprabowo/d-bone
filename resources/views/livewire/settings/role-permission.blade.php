@@ -132,7 +132,7 @@
     </div>
 
     @if($showModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar" x-data="{ show: @entangle('showModal') }">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.closeModal()"></div>
 
@@ -154,7 +154,7 @@
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Permissions</label>
-                                    <div class="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
+                                    <div class="max-h-96 overflow-y-auto custom-scrollbar border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
                                         @foreach($permissionGroups as $groupName => $groupPermissions)
                                             <div>
                                                 <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ $groupName }}</h4>

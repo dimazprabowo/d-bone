@@ -124,6 +124,7 @@ class PengadaanForm extends Component
         } else {
             $this->authorize('create', Pengadaan::class);
             $this->tanggal_pesanan_spk = now()->format('Y-m-d');
+            $this->cabang_id = Cabang::where('code', 'JKT')->value('id');
         }
 
         if (empty($this->items)) {
@@ -134,7 +135,7 @@ class PengadaanForm extends Component
     public function rules()
     {
         return [
-            'no_pesanan_spk' => ['required', 'string', 'max:50', $this->editMode ? 'unique:pengadaans,no_pesanan_spk,'.$this->pengadaanId : 'unique:pengadaans,no_pesanan_spk'],
+            'no_pesanan_spk' => ['required', 'string', 'max:50', Rule::unique('pengadaans', 'no_pesanan_spk')->whereNull('deleted_at')->ignore($this->editMode ? $this->pengadaanId : null)],
             'nama_pemohon' => 'required|string|max:150',
             'tipe_biaya' => ['required', Rule::enum(TipeBiaya::class)],
             'nama_project' => ['nullable', 'string', 'max:150', Rule::requiredIf($this->tipe_biaya === TipeBiaya::RabProject->value)],

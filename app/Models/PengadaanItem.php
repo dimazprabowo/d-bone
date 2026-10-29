@@ -31,7 +31,7 @@ class PengadaanItem extends Model
 
     public function pengadaan(): BelongsTo
     {
-        return $this->belongsTo(Pengadaan::class);
+        return $this->belongsTo(Pengadaan::class)->withTrashed();
     }
 
     public function satuan(): BelongsTo

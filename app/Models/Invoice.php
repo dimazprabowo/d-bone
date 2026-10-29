@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\FileStatus;
-use App\Enums\PaymentApprovalStatus;
 use App\Enums\StatusPembayaranPengadaan;
 use App\Traits\Blameable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -53,7 +52,7 @@ class Invoice extends Model
 
     public function pengadaan(): BelongsTo
     {
-        return $this->belongsTo(Pengadaan::class);
+        return $this->belongsTo(Pengadaan::class)->withTrashed();
     }
 
     public function payments(): HasMany
@@ -98,14 +97,26 @@ class Invoice extends Model
     public function getTotalDibayarAttribute(): float
     {
         if ($this->relationLoaded('payments')) {
-            return (float) $this->payments
-                ->where('status_approval', PaymentApprovalStatus::Approved)
-                ->sum('jumlah_bayar');
+            return (float) $this->payments->sum('jumlah_bayar');
         }
 
-        return (float) $this->payments()
-            ->where('status_approval', PaymentApprovalStatus::Approved)
-            ->sum('jumlah_bayar');
+        return (float) $this->payments()->sum('jumlah_bayar');
+    }
+
+    /**
+     * Sisa tagihan yang belum dibayar (0 bila lunas/kelebihan).
+     */
+    public function getSisaTagihanAttribute(): float
+    {
+        return max(0.0, (float) $this->jumlah - $this->total_dibayar);
+    }
+
+    /**
+     * Kelebihan pembayaran di atas jumlah tagihan (0 bila tidak lebih).
+     */
+    public function getKelebihanBayarAttribute(): float
+    {
+        return max(0.0, $this->total_dibayar - (float) $this->jumlah);
     }
 
     /**

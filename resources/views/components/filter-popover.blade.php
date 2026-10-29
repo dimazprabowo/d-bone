@@ -1,5 +1,6 @@
 @props([
     'filters' => [],
+    'width' => 'w-72',
 ])
 
 <div class="relative w-full md:w-auto" x-data="{ filterOpen: false, dropUp: false,
@@ -38,7 +39,7 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
-        class="absolute right-0 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 p-4">
+        class="absolute right-0 {{ $width }} max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 p-4">
         <div class="space-y-3">
             {{ $slot }}
         </div>

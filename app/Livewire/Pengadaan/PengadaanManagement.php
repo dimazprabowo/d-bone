@@ -2,9 +2,12 @@
 
 namespace App\Livewire\Pengadaan;
 
+use App\Enums\JatuhTempoStatus;
 use App\Enums\PengadaanApprovalStatus;
+use App\Enums\TipeBiaya;
 use App\Exports\PengadaanExport;
 use App\Livewire\Traits\HasNotification;
+use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\Pengadaan;
 use App\Models\Vendor;
@@ -27,6 +30,22 @@ class PengadaanManagement extends Component
     public $cabangFilter = '';
 
     public $statusFilter = '';
+
+    public $bisnisAreaFilter = '';
+
+    public $tipeBiayaFilter = '';
+
+    public $statusBayarFilter = '';
+
+    public $jatuhTempoFilter = '';
+
+    public $tanggalDari = '';
+
+    public $tanggalSampai = '';
+
+    public $totalMin = '';
+
+    public $totalMax = '';
 
     public bool $filterChanged = false;
 
@@ -52,9 +71,28 @@ class PengadaanManagement extends Component
 
     public $rejectionReason;
 
+    public $showHistoryModal = false;
+
+    public $historyPengadaan = null;
+
     public function mount()
     {
         $this->authorize('viewAny', Pengadaan::class);
+    }
+
+    public function openStatusHistory(int $id): void
+    {
+        $pengadaan = Pengadaan::with(['creator', 'updater', 'approvalInstances.steps.approvers', 'approvalInstances.actions.user', 'approvalInstances.actions.step'])
+            ->findOrFail($id);
+
+        $this->authorize('view', $pengadaan);
+        $this->historyPengadaan = $pengadaan;
+        $this->showHistoryModal = true;
+    }
+
+    public function closeHistoryModal(): void
+    {
+        $this->reset(['showHistoryModal', 'historyPengadaan']);
     }
 
     public function updatingSearch()
@@ -81,9 +119,57 @@ class PengadaanManagement extends Component
         $this->filterChanged = true;
     }
 
+    public function updatingBisnisAreaFilter()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
+    public function updatingTipeBiayaFilter()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
+    public function updatingStatusBayarFilter()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
+    public function updatingJatuhTempoFilter()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
+    public function updatingTanggalDari()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
+    public function updatingTanggalSampai()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
+    public function updatingTotalMin()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
+    public function updatingTotalMax()
+    {
+        $this->resetPage();
+        $this->filterChanged = true;
+    }
+
     public function resetFilters()
     {
-        $this->reset(['vendorFilter', 'cabangFilter', 'statusFilter']);
+        $this->reset(['vendorFilter', 'cabangFilter', 'statusFilter', 'bisnisAreaFilter', 'tipeBiayaFilter', 'statusBayarFilter', 'jatuhTempoFilter', 'tanggalDari', 'tanggalSampai', 'totalMin', 'totalMax']);
         $this->resetPage();
         $this->filterChanged = true;
         $this->notifySuccess('Filter berhasil direset.');
@@ -111,6 +197,54 @@ class PengadaanManagement extends Component
             'value' => $c->value,
             'label' => $c->label(),
         ])->toArray();
+    }
+
+    public function getBisnisAreaOptionsProperty(): array
+    {
+        return BisnisArea::active()->orderBy('name')->get()->map(fn ($b) => [
+            'value' => $b->id,
+            'label' => $b->name,
+        ])->toArray();
+    }
+
+    public function getTipeBiayaOptionsProperty(): array
+    {
+        return collect(TipeBiaya::cases())->map(fn ($c) => [
+            'value' => $c->value,
+            'label' => $c->label(),
+        ])->toArray();
+    }
+
+    public function getStatusBayarOptionsProperty(): array
+    {
+        return [
+            ['value' => 'belum_ditagih', 'label' => 'Belum Ditagih'],
+            ['value' => 'belum_dibayar', 'label' => 'Belum Dibayar'],
+            ['value' => 'sebagian', 'label' => 'Dibayar Sebagian'],
+            ['value' => 'lunas', 'label' => 'Lunas'],
+        ];
+    }
+
+    public function getJatuhTempoOptionsProperty(): array
+    {
+        return collect(JatuhTempoStatus::cases())->map(fn ($c) => [
+            'value' => $c->value,
+            'label' => $c->label(),
+        ])->toArray();
+    }
+
+    protected function activeFilters(): array
+    {
+        return [
+            'bisnis_area_id' => $this->bisnisAreaFilter,
+            'tipe_biaya' => $this->tipeBiayaFilter,
+            'status_bayar' => $this->statusBayarFilter,
+            'jatuh_tempo' => $this->jatuhTempoFilter,
+            'tanggal_dari' => $this->tanggalDari,
+            'tanggal_sampai' => $this->tanggalSampai,
+            'total_min' => $this->totalMin,
+            'total_max' => $this->totalMax,
+        ];
     }
 
     public function create()
@@ -220,7 +354,7 @@ class PengadaanManagement extends Component
     {
         $this->authorize('exportExcel', Pengadaan::class);
 
-        return (new PengadaanExport($this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter))
+        return (new PengadaanExport($this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter, $this->activeFilters()))
             ->download('pengadaan-'.now()->format('Y-m-d-His').'.xlsx');
     }
 
@@ -229,7 +363,7 @@ class PengadaanManagement extends Component
         $this->authorize('exportPdf', Pengadaan::class);
 
         $service = app(PengadaanService::class);
-        $pengadaans = $service->getFiltered($this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter, perPage: 100000)
+        $pengadaans = $service->getFiltered($this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter, perPage: 100000, filters: $this->activeFilters())
             ->getCollection()
             ->load(['invoices.payments', 'bisnisArea']);
 
@@ -258,7 +392,8 @@ class PengadaanManagement extends Component
     {
         $pengadaans = $service->getFiltered(
             $this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter,
-            sortField: $this->sortField, sortDirection: $this->sortDirection
+            sortField: $this->sortField, sortDirection: $this->sortDirection,
+            filters: $this->activeFilters()
         );
 
         if ($this->filterChanged) {
@@ -268,6 +403,7 @@ class PengadaanManagement extends Component
 
         return view('livewire.pengadaan.pengadaan-management', [
             'pengadaans' => $pengadaans,
+            'stats' => $service->getFilteredStats($this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter, $this->activeFilters()),
         ]);
     }
 }

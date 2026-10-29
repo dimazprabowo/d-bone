@@ -7,7 +7,7 @@
 ])
 
 @if($show)
-    <div class="fixed inset-0 z-[60] overflow-y-auto">
+    <div class="fixed inset-0 z-[60] overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-center min-h-screen px-4 py-6">
             <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80" wire:click="$set('{{ $attributes->wire('model')->value() }}', false)"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm z-10 text-center">

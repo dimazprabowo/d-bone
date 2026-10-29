@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Livewire\Pengadaan\PengadaanForm;
 use App\Livewire\Pengadaan\PengadaanManagement;
+use App\Models\ApprovalFlow;
+use App\Models\ApprovalInstance;
 use App\Models\BisnisArea;
 use App\Models\KategoriItem;
 use App\Models\Klaster;
@@ -11,6 +13,7 @@ use App\Models\Pengadaan;
 use App\Models\Satuan;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\ApprovalService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -202,10 +205,30 @@ class PengadaanManagementTest extends TestCase
         Livewire::test(PengadaanForm::class)->assertForbidden();
     }
 
+    protected function makeApprovalInstance(Pengadaan $pengadaan, array $approverIds): ApprovalInstance
+    {
+        $flow = ApprovalFlow::create([
+            'name' => 'Test Flow',
+            'entity_type' => 'pengadaan',
+            'is_active' => true,
+        ]);
+
+        $step = $flow->steps()->create([
+            'position' => 1,
+            'name' => 'Review',
+            'mode' => 'any',
+        ]);
+
+        $step->approvers()->sync($approverIds);
+
+        return app(ApprovalService::class)->submit($pengadaan, $pengadaan->creator);
+    }
+
     public function test_user_with_approve_permission_can_approve_pending_pengadaan(): void
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_approve']);
         $pengadaan = Pengadaan::factory()->create();
+        $this->makeApprovalInstance($pengadaan, [$user->id]);
 
         $this->actingAs($user);
 
@@ -225,6 +248,7 @@ class PengadaanManagementTest extends TestCase
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_approve']);
         $pengadaan = Pengadaan::factory()->create();
+        $this->makeApprovalInstance($pengadaan, [$user->id]);
 
         $this->actingAs($user);
 

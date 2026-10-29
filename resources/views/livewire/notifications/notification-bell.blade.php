@@ -36,7 +36,7 @@
             </div>
 
             {{-- Notification List --}}
-            <div class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+            <div class="max-h-80 overflow-y-auto custom-scrollbar divide-y divide-gray-100 dark:divide-gray-700">
                 @forelse($notifications as $notification)
                     <div wire:key="notif-{{ $notification->id }}"
                          wire:click="markAsRead({{ $notification->id }})"

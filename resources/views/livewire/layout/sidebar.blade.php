@@ -45,7 +45,7 @@
         </div>
 
         {{-- Navigation --}}
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto overflow-x-hidden sidebar-scroll"
+        <nav class="flex-1 py-4 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden sidebar-scroll"
              :class="Alpine.store('sidebar').collapsed ? 'lg:px-2 px-3' : 'px-3'">
             @foreach($menuItems as $item)
                 @if(isset($item['children']))

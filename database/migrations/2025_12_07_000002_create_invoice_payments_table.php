@@ -14,10 +14,6 @@ return new class extends Migration
             $table->date('tanggal_bayar');
             $table->decimal('jumlah_bayar', 15, 2);
             $table->string('metode_bayar')->nullable();
-            $table->enum('status_approval', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('approved_at')->nullable();
-            $table->text('rejection_reason')->nullable();
             $table->text('catatan')->nullable();
 
             // Bukti transfer (async via worker)
@@ -33,7 +29,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('invoice_id');
-            $table->index('status_approval');
             $table->index('tanggal_bayar');
         });
     }

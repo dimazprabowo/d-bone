@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -10,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('pengadaans', function (Blueprint $table) {
             $table->id();
-            $table->string('no_pesanan_spk', 50)->unique();
+            $table->string('no_pesanan_spk', 50);
             $table->string('nama_pemohon', 150);
             $table->string('tipe_biaya', 50);
             $table->string('nama_project', 150)->nullable();
@@ -38,6 +39,17 @@ return new class extends Migration
             $table->index('tanggal_pesanan_spk');
             $table->index('tanggal_jatuh_tempo');
         });
+
+        // Unique hanya untuk record aktif — soft-deleted boleh dipakai ulang.
+        // Postgres/SQLite: partial index. MySQL tidak support partial index
+        // → generated marker column (aktif='0', terhapus=id) + composite unique.
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver === 'mysql') {
+            DB::statement('ALTER TABLE pengadaans ADD COLUMN deleted_spk_marker VARCHAR(60) GENERATED ALWAYS AS (IF(deleted_at IS NULL, "0", CAST(id AS CHAR))) STORED');
+            DB::statement('CREATE UNIQUE INDEX pengadaans_no_pesanan_spk_unique ON pengadaans (no_pesanan_spk, deleted_spk_marker)');
+        } else {
+            DB::statement('CREATE UNIQUE INDEX pengadaans_no_pesanan_spk_unique ON pengadaans (no_pesanan_spk) WHERE deleted_at IS NULL');
+        }
     }
 
     public function down(): void

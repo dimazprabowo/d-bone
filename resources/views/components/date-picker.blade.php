@@ -9,6 +9,7 @@
 <div
     x-data="{
         open: false,
+        dropUp: false,
         value: @entangle($wireModel){{ $isLive ? '.live' : '' }},
         viewYear: null,
         viewMonth: null,
@@ -44,7 +45,17 @@
 
         toggle() {
             this.open = !this.open;
-            if (this.open) this.resetView();
+            if (this.open) {
+                this.resetView();
+                this.$nextTick(() => this.checkPosition());
+            }
+        },
+
+        checkPosition() {
+            const rect = this.$refs.trigger.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const calendarHeight = 380;
+            this.dropUp = spaceBelow < calendarHeight && rect.top > spaceBelow;
         },
 
         resetView() {
@@ -93,11 +104,12 @@
         },
     }"
     x-on:click.away="open = false"
+    @scroll.window="open && checkPosition()"
     class="relative"
     @if($wireKey) wire:key="{{ $wireKey }}" @endif
     wire:ignore.self
 >
-    <button type="button" x-on:click="toggle()" {{ $attributes->only('id') }}
+    <button type="button" x-on:click="toggle()" x-ref="trigger" {{ $attributes->only('id') }}
         class="mt-1 flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-left text-sm text-gray-900 shadow-sm transition-colors hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:border-gray-500 dark:focus:ring-blue-400 dark:focus:ring-offset-gray-800">
         <span x-text="displayText" :class="parsed ? '' : 'text-gray-400 dark:text-gray-500'"></span>
         <svg class="h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +118,8 @@
     </button>
 
     <div x-show="open" x-cloak x-transition.opacity.duration.150ms
-        class="absolute left-0 z-50 mt-2 w-72 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        :class="dropUp ? 'bottom-full mb-2' : 'top-full mt-2'"
+        class="absolute left-0 z-50 w-72 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800">
         <div class="mb-3 flex items-center justify-between">
             <button type="button" x-on:click="prevMonth()" class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700" title="Bulan sebelumnya">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>

@@ -57,7 +57,7 @@ class User extends Authenticatable implements MustVerifyEmail
     // Relationships
     public function cabang(): BelongsTo
     {
-        return $this->belongsTo(Cabang::class);
+        return $this->belongsTo(Cabang::class)->withTrashed();
     }
 
     public function userNotifications(): HasMany

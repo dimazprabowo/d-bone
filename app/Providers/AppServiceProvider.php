@@ -14,6 +14,7 @@ use App\Models\Satuan;
 use App\Models\SystemConfiguration;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Policies\ApprovalFlowPolicy;
 use App\Policies\BisnisAreaPolicy;
 use App\Policies\CabangPolicy;
 use App\Policies\ChatPolicy;
@@ -67,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Satuan::class, SatuanPolicy::class);
         Gate::policy(KategoriItem::class, KategoriItemPolicy::class);
         Gate::policy(Pengadaan::class, PengadaanPolicy::class);
+        Gate::policy(ApprovalFlow::class, ApprovalFlowPolicy::class);
 
         // Dashboard policy — bound to a string key (no Eloquent model)
         Gate::define('viewStats', [DashboardPolicy::class, 'viewStats']);

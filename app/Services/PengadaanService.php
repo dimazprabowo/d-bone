@@ -2,14 +2,15 @@
 
 namespace App\Services;
 
-use App\Enums\PaymentApprovalStatus;
 use App\Enums\PengadaanApprovalStatus;
 use App\Enums\TipeBiaya;
+use App\Helpers\ConfigHelper;
 use App\Jobs\ProcessPengadaanEvidence;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Pengadaan;
 use App\Models\PengadaanEvidence;
+use App\Models\User;
 use App\Traits\HasDynamicLike;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -44,10 +45,41 @@ class PengadaanService
         ?string $statusFilter = null,
         int $perPage = 15,
         string $sortField = 'tanggal_pesanan_spk',
-        string $sortDirection = 'desc'
+        string $sortDirection = 'desc',
+        array $filters = []
     ): LengthAwarePaginator {
         $query = Pengadaan::with(['vendor', 'cabang', 'bisnisArea', 'approver', 'invoices.payments'])->withCount(['items', 'evidences', 'invoices']);
 
+        $this->applyListFilters($query, $search, $vendorFilter, $cabangFilter, $statusFilter, $filters);
+
+        $direction = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
+
+        if ($sortField === 'saldo_belum_bayar' || $sortField === 'status_pembayaran') {
+            $hasInv = 'EXISTS (SELECT 1 FROM invoices i0 WHERE i0.pengadaan_id = pengadaans.id)';
+            $inv = '(SELECT COALESCE(SUM(i2.jumlah), 0) FROM invoices i2 WHERE i2.pengadaan_id = pengadaans.id)';
+            $paid = '(SELECT COALESCE(SUM(ip.jumlah_bayar), 0) FROM invoice_payments ip INNER JOIN invoices i3 ON i3.id = ip.invoice_id WHERE i3.pengadaan_id = pengadaans.id)';
+            $expr = $sortField === 'saldo_belum_bayar'
+                ? "CASE WHEN NOT $hasInv THEN -1 ELSE ($inv - $paid) END"
+                : "CASE WHEN NOT $hasInv THEN 0 WHEN $paid <= 0 THEN 1 WHEN $paid >= $inv THEN 3 ELSE 2 END";
+
+            return $query->orderByRaw("$expr $direction")->orderByDesc('id')->paginate($perPage);
+        }
+
+        $sortable = ['no_pesanan_spk', 'tanggal_pesanan_spk', 'tanggal_jatuh_tempo', 'total_biaya', 'status_approval'];
+        $field = in_array($sortField, $sortable, true) ? $sortField : 'tanggal_pesanan_spk';
+
+        return $query->orderBy($field, $direction)
+            ->orderByDesc('id')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Terapkan seluruh filter list (scope cabang, search, vendor, status,
+     * dan filter lanjutan) ke query — dipakai ulang oleh getFiltered
+     * dan getFilteredStats.
+     */
+    protected function applyListFilters($query, ?string $search, ?string $vendorFilter, ?string $cabangFilter, ?string $statusFilter, array $filters): void
+    {
         $userCabangId = auth()->check() ? auth()->user()->cabang_id : null;
         $this->applyCabangScope($query, $userCabangId, $cabangFilter);
 
@@ -69,25 +101,103 @@ class PengadaanService
             $query->where('status_approval', $statusFilter);
         }
 
-        $direction = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
+        $this->applyAdvancedFilters($query, $filters);
+    }
 
-        if ($sortField === 'saldo_belum_bayar' || $sortField === 'status_pembayaran') {
-            $hasInv = 'EXISTS (SELECT 1 FROM invoices i0 WHERE i0.pengadaan_id = pengadaans.id)';
-            $inv = '(SELECT COALESCE(SUM(i2.jumlah), 0) FROM invoices i2 WHERE i2.pengadaan_id = pengadaans.id)';
-            $paid = "(SELECT COALESCE(SUM(ip.jumlah_bayar), 0) FROM invoice_payments ip INNER JOIN invoices i3 ON i3.id = ip.invoice_id WHERE i3.pengadaan_id = pengadaans.id AND ip.status_approval = 'approved')";
-            $expr = $sortField === 'saldo_belum_bayar'
-                ? "CASE WHEN NOT $hasInv THEN -1 ELSE ($inv - $paid) END"
-                : "CASE WHEN NOT $hasInv THEN 0 WHEN $paid <= 0 THEN 1 WHEN $paid >= $inv THEN 3 ELSE 2 END";
+    /**
+     * Agregat ringkasan untuk stat cards di index — menghormati semua
+     * filter/search yang sama dengan tabel.
+     */
+    public function getFilteredStats(
+        ?string $search = null,
+        ?string $vendorFilter = null,
+        ?string $cabangFilter = null,
+        ?string $statusFilter = null,
+        array $filters = []
+    ): array {
+        $query = Pengadaan::query();
+        $this->applyListFilters($query, $search, $vendorFilter, $cabangFilter, $statusFilter, $filters);
 
-            return $query->orderByRaw("$expr $direction")->orderByDesc('id')->paginate($perPage);
+        $paid = '(SELECT COALESCE(SUM(ip.jumlah_bayar), 0) FROM invoice_payments ip INNER JOIN invoices i3 ON i3.id = ip.invoice_id WHERE i3.pengadaan_id = pengadaans.id)';
+        $invoiced = '(SELECT COALESCE(SUM(i2.jumlah), 0) FROM invoices i2 WHERE i2.pengadaan_id = pengadaans.id)';
+
+        // Financial stats: hanya untuk pengadaan APPROVED (konsisten dengan getDashboardStats).
+        $row = $query->selectRaw('COUNT(*) as total')
+            ->selectRaw("COALESCE(SUM(CASE WHEN status_approval = 'approved' THEN total_biaya ELSE 0 END), 0) as total_biaya")
+            ->selectRaw("SUM(CASE WHEN status_approval = 'pending' THEN 1 ELSE 0 END) as pending")
+            ->selectRaw("SUM(CASE WHEN status_approval = 'approved' THEN 1 ELSE 0 END) as approved")
+            ->selectRaw("SUM(CASE WHEN status_approval = 'rejected' THEN 1 ELSE 0 END) as rejected")
+            // Alias diberi suffix _agg agar tidak tertimpa accessor model
+            // (getSaldoBelumBayarAttribute / getTotalInvoiceAttribute).
+            ->selectRaw("COALESCE(SUM(CASE WHEN status_approval = 'approved' THEN ($invoiced) ELSE 0 END), 0) as invoice_agg")
+            ->selectRaw("COALESCE(SUM(CASE WHEN status_approval = 'approved' THEN ($paid) ELSE 0 END), 0) as dibayar_agg")
+            ->selectRaw("COALESCE(SUM(CASE WHEN status_approval = 'approved' AND (total_biaya - ($paid)) > 0 THEN (total_biaya - ($paid)) ELSE 0 END), 0) as saldo_agg")
+            ->selectRaw("COALESCE(SUM(CASE WHEN status_approval = 'approved' AND (total_biaya - ($invoiced)) > 0 THEN (total_biaya - ($invoiced)) ELSE 0 END), 0) as belum_ditagih_agg")
+            ->first();
+
+        $totalBiaya = (float) $row->total_biaya;
+        $totalDibayar = (float) $row->dibayar_agg;
+
+        return [
+            'total' => (int) $row->total,
+            'total_biaya' => $totalBiaya,
+            'pending' => (int) $row->pending,
+            'approved' => (int) $row->approved,
+            'rejected' => (int) $row->rejected,
+            'total_dibayar' => $totalDibayar,
+            'belum_ditagih' => (float) $row->belum_ditagih_agg,
+            'saldo_belum_bayar' => (float) $row->saldo_agg,
+        ];
+    }
+
+    /**
+     * Filter lanjutan: bisnis area, tipe biaya, status bayar, status jatuh
+     * tempo, rentang tanggal SPK, dan rentang total biaya.
+     */
+    public function applyAdvancedFilters($query, array $filters): void
+    {
+        if (! empty($filters['bisnis_area_id'])) {
+            $query->where('bisnis_area_id', $filters['bisnis_area_id']);
         }
 
-        $sortable = ['no_pesanan_spk', 'tanggal_pesanan_spk', 'tanggal_jatuh_tempo', 'total_biaya', 'status_approval'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'tanggal_pesanan_spk';
+        if (! empty($filters['tipe_biaya'])) {
+            $query->where('tipe_biaya', $filters['tipe_biaya']);
+        }
 
-        return $query->orderBy($field, $direction)
-            ->orderByDesc('id')
-            ->paginate($perPage);
+        if (! empty($filters['status_bayar'])) {
+            $hasInv = 'EXISTS (SELECT 1 FROM invoices i0 WHERE i0.pengadaan_id = pengadaans.id)';
+            $inv = '(SELECT COALESCE(SUM(i2.jumlah), 0) FROM invoices i2 WHERE i2.pengadaan_id = pengadaans.id)';
+            $paid = '(SELECT COALESCE(SUM(ip.jumlah_bayar), 0) FROM invoice_payments ip INNER JOIN invoices i3 ON i3.id = ip.invoice_id WHERE i3.pengadaan_id = pengadaans.id)';
+            $expr = "CASE WHEN NOT $hasInv THEN 0 WHEN $paid <= 0 THEN 1 WHEN $paid >= $inv THEN 3 ELSE 2 END";
+            $map = ['belum_ditagih' => 0, 'belum_dibayar' => 1, 'sebagian' => 2, 'lunas' => 3];
+            $query->whereRaw("$expr = ?", [$map[$filters['status_bayar']] ?? -1]);
+        }
+
+        if (! empty($filters['jatuh_tempo'])) {
+            $warnDays = ConfigHelper::getJatuhTempoWarningDays();
+            match ($filters['jatuh_tempo']) {
+                'lewat' => $query->whereNotNull('tanggal_jatuh_tempo')->where('tanggal_jatuh_tempo', '<', today()),
+                'proses' => $query->whereNotNull('tanggal_jatuh_tempo')->whereBetween('tanggal_jatuh_tempo', [today(), today()->addDays($warnDays)]),
+                'aman' => $query->where(fn ($q) => $q->whereNull('tanggal_jatuh_tempo')->orWhere('tanggal_jatuh_tempo', '>', today()->addDays($warnDays))),
+                default => null,
+            };
+        }
+
+        if (! empty($filters['tanggal_dari'])) {
+            $query->where('tanggal_pesanan_spk', '>=', $filters['tanggal_dari']);
+        }
+
+        if (! empty($filters['tanggal_sampai'])) {
+            $query->where('tanggal_pesanan_spk', '<=', $filters['tanggal_sampai']);
+        }
+
+        if (! empty($filters['total_min'])) {
+            $query->where('total_biaya', '>=', $filters['total_min']);
+        }
+
+        if (! empty($filters['total_max'])) {
+            $query->where('total_biaya', '<=', $filters['total_max']);
+        }
     }
 
     /**
@@ -114,6 +224,8 @@ class PengadaanService
             foreach ($evidences as $evidence) {
                 $this->createEvidence($pengadaan, $evidence);
             }
+
+            app(ApprovalService::class)->submit($pengadaan);
 
             return $pengadaan->fresh(['items', 'evidences', 'vendor', 'cabang']);
         });
@@ -198,32 +310,45 @@ class PengadaanService
         });
     }
 
-    public function approve(Pengadaan $pengadaan, int $approverId): Pengadaan
+    public function approve(Pengadaan $pengadaan, int $approverId, ?string $note = null): Pengadaan
     {
-        return DB::transaction(function () use ($pengadaan, $approverId) {
-            $pengadaan->update([
-                'status_approval' => PengadaanApprovalStatus::Approved->value,
-                'approved_by' => $approverId,
-                'approved_at' => now(),
-                'rejection_reason' => null,
-            ]);
+        $instance = $pengadaan->activeApprovalInstance();
+        abort_unless($instance, 422, 'Tidak ada alur persetujuan aktif untuk pengadaan ini.');
 
-            return $pengadaan->fresh();
-        });
+        app(ApprovalService::class)->approve($instance, User::findOrFail($approverId), $note);
+
+        return $pengadaan->fresh();
     }
 
     public function reject(Pengadaan $pengadaan, int $approverId, string $reason): Pengadaan
     {
-        return DB::transaction(function () use ($pengadaan, $approverId, $reason) {
-            $pengadaan->update([
-                'status_approval' => PengadaanApprovalStatus::Rejected->value,
-                'approved_by' => $approverId,
-                'approved_at' => now(),
-                'rejection_reason' => $reason,
-            ]);
+        $instance = $pengadaan->activeApprovalInstance();
+        abort_unless($instance, 422, 'Tidak ada alur persetujuan aktif untuk pengadaan ini.');
 
-            return $pengadaan->fresh();
-        });
+        app(ApprovalService::class)->reject($instance, User::findOrFail($approverId), $reason);
+
+        return $pengadaan->fresh();
+    }
+
+    /**
+     * Ajukan ulang pengadaan yang ditolak — snapshot alur terbaru dari master.
+     */
+    public function resubmit(Pengadaan $pengadaan, ?User $submitter = null): void
+    {
+        $instance = $pengadaan->approvalInstances()->latest()->first();
+
+        if ($instance) {
+            app(ApprovalService::class)->resubmit($instance, $submitter);
+        } else {
+            app(ApprovalService::class)->submit($pengadaan, $submitter);
+        }
+
+        $pengadaan->update([
+            'status_approval' => PengadaanApprovalStatus::Pending->value,
+            'approved_by' => null,
+            'approved_at' => null,
+            'rejection_reason' => null,
+        ]);
     }
 
     // ============================================================
@@ -277,7 +402,6 @@ class PengadaanService
      *   breakdown status invoice.
      * - invoice_overdue, invoice_due_soon: invoice yang perlu perhatian.
      * - pengadaan_pending, pengadaan_rejected: action items approval.
-     * - pembayaran_pending_approval: action items finance.
      */
     public function getDashboardStats(): array
     {
@@ -306,15 +430,24 @@ class PengadaanService
         $totalPengadaan = (int) $approvedQuery()->count();
         $pengadaanIds = $approvedQuery()->pluck('id');
 
+        // Saldo & belum ditagih: clamp per-baris max(0, ...) agar konsisten
+        // dengan accessor saldo_belum_bayar (overpay 1 dokumen tak mengurangi total).
+        $paid = '(SELECT COALESCE(SUM(ip.jumlah_bayar), 0) FROM invoice_payments ip INNER JOIN invoices i3 ON i3.id = ip.invoice_id WHERE i3.pengadaan_id = pengadaans.id)';
+        $invoiced = '(SELECT COALESCE(SUM(i2.jumlah), 0) FROM invoices i2 WHERE i2.pengadaan_id = pengadaans.id)';
+        $saldoRow = $approvedQuery()
+            ->selectRaw("COALESCE(SUM(CASE WHEN (total_biaya - ($paid)) > 0 THEN (total_biaya - ($paid)) ELSE 0 END), 0) as saldo")
+            ->selectRaw("COALESCE(SUM(CASE WHEN (total_biaya - ($invoiced)) > 0 THEN (total_biaya - ($invoiced)) ELSE 0 END), 0) as belum_ditagih")
+            ->first();
+
         // Invoice financial stats
         $totalInvoice = (float) Invoice::whereIn('pengadaan_id', $pengadaanIds)->sum('jumlah');
         $totalDibayar = (float) InvoicePayment::whereHas('invoice', function ($q) use ($pengadaanIds) {
             $q->whereIn('pengadaan_id', $pengadaanIds);
-        })->where('status_approval', PaymentApprovalStatus::Approved)->sum('jumlah_bayar');
+        })->sum('jumlah_bayar');
 
         // Invoice status breakdown (single query with subquery sum untuk efisiensi)
         $invoices = Invoice::whereIn('pengadaan_id', $pengadaanIds)
-            ->withSum(['payments as total_dibayar_approved' => fn ($q) => $q->where('status_approval', PaymentApprovalStatus::Approved->value)], 'jumlah_bayar')
+            ->withSum('payments as total_dibayar_approved', 'jumlah_bayar')
             ->get();
 
         $invoiceTotal = $invoices->count();
@@ -327,11 +460,9 @@ class PengadaanService
         $invoiceDueSoon = $invoices->filter(fn ($i) => $i->jatuh_tempo && $i->jatuh_tempo->format('Y-m-d') >= $today && $i->jatuh_tempo->format('Y-m-d') <= $dueThreshold && (float) ($i->total_dibayar_approved ?? 0) < (float) $i->jumlah)->count();
 
         // Action items: pending approvals (cabang-scoped, semua status)
+        $pengadaanTotal = (int) $allQuery()->count();
         $pengadaanPending = (int) $allQuery()->pending()->count();
         $pengadaanRejected = (int) $allQuery()->where('status_approval', PengadaanApprovalStatus::Rejected)->count();
-        $pembayaranPendingApproval = (int) InvoicePayment::whereHas('invoice', function ($q) use ($pengadaanIds) {
-            $q->whereIn('pengadaan_id', $pengadaanIds);
-        })->where('status_approval', PaymentApprovalStatus::Pending)->count();
 
         // Percentages (capped at 100 untuk progress bar)
         $persentaseDibayar = $totalInvoice > 0 ? min(100, round(($totalDibayar / $totalInvoice) * 100, 1)) : 0;
@@ -341,9 +472,9 @@ class PengadaanService
             'total_pengadaan' => $totalPengadaan,
             'total_biaya' => $totalBiaya,
             'total_invoice' => $totalInvoice,
-            'total_belum_ditagih' => max($totalBiaya - $totalInvoice, 0),
+            'total_belum_ditagih' => (float) $saldoRow->belum_ditagih,
             'total_dibayar' => $totalDibayar,
-            'total_outstanding' => max($totalInvoice - $totalDibayar, 0),
+            'total_outstanding' => (float) $saldoRow->saldo,
             'persentase_dibayar' => $persentaseDibayar,
             'persentase_ditagih' => $persentaseDitagih,
             'invoice_total' => $invoiceTotal,
@@ -352,9 +483,9 @@ class PengadaanService
             'invoice_belum_dibayar' => $invoiceBelumDibayar,
             'invoice_overdue' => $invoiceOverdue,
             'invoice_due_soon' => $invoiceDueSoon,
+            'pengadaan_total' => $pengadaanTotal,
             'pengadaan_pending' => $pengadaanPending,
             'pengadaan_rejected' => $pengadaanRejected,
-            'pembayaran_pending_approval' => $pembayaranPendingApproval,
         ];
     }
 

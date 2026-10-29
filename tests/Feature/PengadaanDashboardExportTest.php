@@ -42,7 +42,7 @@ class PengadaanDashboardExportTest extends TestCase
 
         $pengadaan = Pengadaan::factory()->approved()->create(['total_biaya' => 10000000]);
         $invoice = Invoice::factory()->create(['pengadaan_id' => $pengadaan->id, 'jumlah' => 6000000]);
-        InvoicePayment::factory()->approved()->create(['invoice_id' => $invoice->id, 'jumlah_bayar' => 4000000]);
+        InvoicePayment::factory()->create(['invoice_id' => $invoice->id, 'jumlah_bayar' => 4000000]);
 
         // Pengadaan pending (belum approved) TIDAK dihitung.
         Pengadaan::factory()->create(['total_biaya' => 99999999]);
@@ -53,7 +53,7 @@ class PengadaanDashboardExportTest extends TestCase
         $this->assertEquals(6000000, $stats['total_invoice']);
         $this->assertEquals(4000000, $stats['total_belum_ditagih']);
         $this->assertEquals(4000000, $stats['total_dibayar']);
-        $this->assertEquals(2000000, $stats['total_outstanding']);
+        $this->assertEquals(6000000, $stats['total_outstanding']);
     }
 
     public function test_get_spend_per_vendor_returns_top_vendors(): void

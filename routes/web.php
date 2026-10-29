@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Actions\Logout;
+use App\Models\ApprovalFlow;
 use App\Models\Pengadaan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,15 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::get('/{pengadaan}', function (Pengadaan $pengadaan) {
             return view('pengadaan.show', ['pengadaan' => $pengadaan]);
         })->middleware('can:pengadaan_view')->name('show');
+    });
+
+    // Alur Persetujuan
+    Route::prefix('alur-persetujuan')->name('approval-flows.')->group(function () {
+        Route::view('/', 'approval-flows.index')->middleware('can:approval_flow_view')->name('index');
+        Route::view('/create', 'approval-flows.create')->middleware('can:approval_flow_create')->name('create');
+        Route::get('/{approvalFlow}/edit', function (ApprovalFlow $approvalFlow) {
+            return view('approval-flows.edit', ['approvalFlow' => $approvalFlow]);
+        })->middleware('can:approval_flow_update')->name('edit');
     });
 
     // Notifications

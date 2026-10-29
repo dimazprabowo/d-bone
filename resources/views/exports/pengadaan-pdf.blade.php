@@ -16,7 +16,7 @@
 <table>
     <thead>
         <tr>
-            <th>No</th><th>No. Pesanan/SPK</th><th>Pemohon</th><th>Tipe Biaya</th><th>Project</th><th>No. WBS</th><th>Vendor</th><th>Cabang</th><th>Bisnis Area</th><th>Tgl. Pesanan/SPK</th><th>Jatuh Tempo</th><th>Item</th><th>Total Biaya</th><th>Status Approval</th><th>Status Invoice</th><th>Status Pembayaran</th>
+            <th>No</th><th>No. Pesanan/SPK</th><th>Pemohon</th><th>Tipe Biaya</th><th>Project</th><th>No. WBS</th><th>Vendor</th><th>Cabang</th><th>Bisnis Area</th><th>Tgl. Pesanan/SPK</th><th>Jatuh Tempo</th><th>Item</th><th>Total Biaya</th><th>Dibayar</th><th>Saldo</th><th>Status Approval</th><th>Status Invoice</th><th>Status Pembayaran</th>
         </tr>
     </thead>
     <tbody>
@@ -35,6 +35,8 @@
             <td>{{ $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-' }}</td>
             <td>{{ $pengadaan->items_count }}</td>
             <td>Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</td>
+            <td>Rp {{ number_format($pengadaan->invoices->sum(fn ($inv) => $inv->total_dibayar), 0, ',', '.') }}</td>
+            <td>Rp {{ number_format($pengadaan->saldo_belum_bayar, 0, ',', '.') }}</td>
             <td>{{ $pengadaan->status_approval->label() }}</td>
             <td>{{ $pengadaan->status_invoice->label() }}</td>
             <td>{{ $pengadaan->status_pembayaran->label() }}</td>

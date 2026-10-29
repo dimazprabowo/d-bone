@@ -2,11 +2,9 @@
 
 namespace App\Policies;
 
-use App\Enums\PaymentApprovalStatus;
-use App\Enums\PengadaanApprovalStatus;
-use App\Models\InvoicePayment;
 use App\Models\Pengadaan;
 use App\Models\User;
+use App\Services\ApprovalService;
 
 class PengadaanPolicy
 {
@@ -56,21 +54,17 @@ class PengadaanPolicy
 
     public function approve(User $user, Pengadaan $pengadaan): bool
     {
-        return $user->can('pengadaan_approve')
-            && $pengadaan->status_approval === PengadaanApprovalStatus::Pending
-            && $this->canAccessCabang($user, $pengadaan);
-    }
+        if (! $this->canAccessCabang($user, $pengadaan)) {
+            return false;
+        }
 
-    /**
-     * Approve/reject payment adalah aksi finansial dedicated — TIDAK memakai
-     * permission `pengadaan_update` biasa (sesuai rule "Policy untuk Aksi
-     * Transisi Status"). Dipanggil via: $this->authorize('approvePayment', [$pengadaan, $payment]).
-     */
-    public function approvePayment(User $user, Pengadaan $pengadaan, InvoicePayment $payment): bool
-    {
-        return $user->can('pembayaran_approve')
-            && $payment->status_approval === PaymentApprovalStatus::Pending
-            && $this->canAccessCabang($user, $pengadaan);
+        $instance = $pengadaan->activeApprovalInstance();
+
+        if (! $instance) {
+            return false;
+        }
+
+        return app(ApprovalService::class)->canActOnCurrentStep($instance, $user);
     }
 
     public function exportExcel(User $user): bool

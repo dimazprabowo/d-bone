@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalInstanceStatus;
 use App\Enums\JatuhTempoStatus;
 use App\Enums\PengadaanApprovalStatus;
 use App\Enums\StatusInvoicePengadaan;
 use App\Enums\StatusPembayaranPengadaan;
 use App\Enums\TipeBiaya;
 use App\Helpers\ConfigHelper;
+use App\Services\ApprovalService;
+use App\Traits\Approvable;
 use App\Traits\Blameable;
 use App\Traits\HasEncryptedRouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +23,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Pengadaan extends Model
 {
-    use Blameable, HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
+    use Approvable, Blameable, HasEncryptedRouteKey, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'no_pesanan_spk',
@@ -69,22 +72,72 @@ class Pengadaan extends Model
 
     public function vendor(): BelongsTo
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Vendor::class)->withTrashed();
     }
 
     public function cabang(): BelongsTo
     {
-        return $this->belongsTo(Cabang::class);
+        return $this->belongsTo(Cabang::class)->withTrashed();
     }
 
     public function bisnisArea(): BelongsTo
     {
-        return $this->belongsTo(BisnisArea::class);
+        return $this->belongsTo(BisnisArea::class)->withTrashed();
     }
 
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public static function approvalEntityType(): string
+    {
+        return 'pengadaan';
+    }
+
+    public function onApprovalFinalized(ApprovalInstance $instance): void
+    {
+        if ($instance->status === ApprovalInstanceStatus::Approved) {
+            $lastApprover = $instance->actions()->where('action', 'approved')->latest('id')->first();
+
+            $this->update([
+                'status_approval' => PengadaanApprovalStatus::Approved->value,
+                'approved_by' => $lastApprover?->user_id,
+                'approved_at' => now(),
+                'rejection_reason' => null,
+            ]);
+        } elseif ($instance->status === ApprovalInstanceStatus::Rejected) {
+            $rejectAction = $instance->actions()->where('action', 'rejected')->latest('id')->first();
+
+            $this->update([
+                'status_approval' => PengadaanApprovalStatus::Rejected->value,
+                'approved_by' => $rejectAction?->user_id,
+                'approved_at' => now(),
+                'rejection_reason' => $rejectAction?->note,
+            ]);
+        }
+    }
+
+    public function activeApprovalInstance(): ?ApprovalInstance
+    {
+        return $this->approvalInstances()
+            ->where('status', ApprovalInstanceStatus::InProgress->value)
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Apakah user bisa approve/reject sekarang.
+     * Wajib cek engine langsung — Gate::before (super admin) bypass policy
+     * sehingga @can('approve') saja tidak cukup untuk menyembunyikan tombol.
+     */
+    public function userCanActOnApproval(User $user): bool
+    {
+        $instance = $this->activeApprovalInstance();
+
+        return $instance
+            && $user->can('approve', $this)
+            && app(ApprovalService::class)->canActOnCurrentStep($instance, $user);
     }
 
     public function items(): HasMany
@@ -165,11 +218,7 @@ class Pengadaan extends Model
     {
         $invoices = $this->relationLoaded('invoices') ? $this->invoices : $this->invoices()->with('payments')->get();
 
-        if ($invoices->isEmpty()) {
-            return 0.0;
-        }
-
-        return max(0.0, $invoices->sum('jumlah') - $invoices->sum('total_dibayar'));
+        return max(0.0, (float) $this->total_biaya - $invoices->sum('total_dibayar'));
     }
 
     public function getJatuhTempoAlertAttribute(): ?JatuhTempoStatus

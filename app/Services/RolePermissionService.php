@@ -77,7 +77,7 @@ class RolePermissionService
             'Dashboard' => [
                 ['name' => 'dashboard_view', 'label' => 'Lihat Dashboard'],
             ],
-            'Cabang' => [
+            'Master Data - Cabang' => [
                 ['name' => 'cabang_view',         'label' => 'Lihat Cabang'],
                 ['name' => 'cabang_create',       'label' => 'Tambah Cabang'],
                 ['name' => 'cabang_update',       'label' => 'Edit Cabang'],
@@ -85,7 +85,7 @@ class RolePermissionService
                 ['name' => 'cabang_export_excel', 'label' => 'Export Excel Cabang'],
                 ['name' => 'cabang_export_pdf',   'label' => 'Export PDF Cabang'],
             ],
-            'Klaster' => [
+            'Master Data - Klaster' => [
                 ['name' => 'klaster_view',         'label' => 'Lihat Klaster'],
                 ['name' => 'klaster_create',       'label' => 'Tambah Klaster'],
                 ['name' => 'klaster_update',       'label' => 'Edit Klaster'],
@@ -93,7 +93,7 @@ class RolePermissionService
                 ['name' => 'klaster_export_excel', 'label' => 'Export Excel Klaster'],
                 ['name' => 'klaster_export_pdf',   'label' => 'Export PDF Klaster'],
             ],
-            'Satuan' => [
+            'Master Data - Satuan' => [
                 ['name' => 'satuan_view',         'label' => 'Lihat Satuan'],
                 ['name' => 'satuan_create',       'label' => 'Tambah Satuan'],
                 ['name' => 'satuan_update',       'label' => 'Edit Satuan'],
@@ -101,7 +101,7 @@ class RolePermissionService
                 ['name' => 'satuan_export_excel', 'label' => 'Export Excel Satuan'],
                 ['name' => 'satuan_export_pdf',   'label' => 'Export PDF Satuan'],
             ],
-            'Kategori Item' => [
+            'Master Data - Kategori Item' => [
                 ['name' => 'kategori_item_view',         'label' => 'Lihat Kategori Item'],
                 ['name' => 'kategori_item_create',       'label' => 'Tambah Kategori Item'],
                 ['name' => 'kategori_item_update',       'label' => 'Edit Kategori Item'],
@@ -109,19 +109,27 @@ class RolePermissionService
                 ['name' => 'kategori_item_export_excel', 'label' => 'Export Excel Kategori Item'],
                 ['name' => 'kategori_item_export_pdf',   'label' => 'Export PDF Kategori Item'],
             ],
-            'Bisnis Area' => [
+            'Master Data - Bisnis Area' => [
                 ['name' => 'bisnis_area_view',   'label' => 'Lihat Bisnis Area'],
                 ['name' => 'bisnis_area_create', 'label' => 'Tambah Bisnis Area'],
                 ['name' => 'bisnis_area_update', 'label' => 'Edit Bisnis Area'],
                 ['name' => 'bisnis_area_delete', 'label' => 'Hapus Bisnis Area'],
             ],
-            'Pengadaan Barang & Jasa' => [
+            'Master Data - Vendor' => [
                 ['name' => 'vendor_view',         'label' => 'Lihat Vendor'],
                 ['name' => 'vendor_create',       'label' => 'Tambah Vendor'],
                 ['name' => 'vendor_update',       'label' => 'Edit Vendor'],
                 ['name' => 'vendor_delete',       'label' => 'Hapus Vendor'],
                 ['name' => 'vendor_export_excel', 'label' => 'Export Excel Vendor'],
                 ['name' => 'vendor_export_pdf',   'label' => 'Export PDF Vendor'],
+            ],
+            'Master Data - Alur Persetujuan' => [
+                ['name' => 'approval_flow_view',    'label' => 'Lihat Alur Persetujuan'],
+                ['name' => 'approval_flow_create',  'label' => 'Tambah Alur Persetujuan'],
+                ['name' => 'approval_flow_update',  'label' => 'Edit Alur Persetujuan'],
+                ['name' => 'approval_flow_delete',  'label' => 'Hapus Alur Persetujuan'],
+            ],
+            'Pengadaan Barang & Jasa' => [
                 ['name' => 'pengadaan_view',      'label' => 'Lihat Pengadaan'],
                 ['name' => 'pengadaan_create',    'label' => 'Tambah Pengadaan'],
                 ['name' => 'pengadaan_update',    'label' => 'Edit Pengadaan'],
@@ -129,15 +137,14 @@ class RolePermissionService
                 ['name' => 'pengadaan_approve',   'label' => 'Approve Pengadaan'],
                 ['name' => 'pengadaan_export_excel', 'label' => 'Export Excel Pengadaan'],
                 ['name' => 'pengadaan_export_pdf',   'label' => 'Export PDF Pengadaan'],
-                ['name' => 'pembayaran_approve',  'label' => 'Approve Pembayaran Invoice'],
             ],
-            'Konfigurasi System' => [
+            'Pengaturan - Konfigurasi System' => [
                 ['name' => 'configuration_view',         'label' => 'Lihat Konfigurasi'],
                 ['name' => 'configuration_update',       'label' => 'Edit Konfigurasi'],
                 ['name' => 'configuration_export_excel', 'label' => 'Export Excel Konfigurasi'],
                 ['name' => 'configuration_export_pdf',   'label' => 'Export PDF Konfigurasi'],
             ],
-            'Manajemen User' => [
+            'Pengaturan - Manajemen User' => [
                 ['name' => 'users_view',         'label' => 'Lihat User'],
                 ['name' => 'users_create',       'label' => 'Tambah User'],
                 ['name' => 'users_update',       'label' => 'Edit User'],
@@ -147,7 +154,7 @@ class RolePermissionService
                 ['name' => 'users_export_pdf',   'label' => 'Export PDF User'],
                 ['name' => 'users_impersonate',  'label' => 'Impersonate User'],
             ],
-            'Roles & Permissions' => [
+            'Pengaturan - Roles & Permissions' => [
                 ['name' => 'roles_view',         'label' => 'Lihat Roles'],
                 ['name' => 'roles_create',       'label' => 'Tambah Role'],
                 ['name' => 'roles_update',       'label' => 'Edit Role'],

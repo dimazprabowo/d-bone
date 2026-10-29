@@ -42,7 +42,7 @@
                                class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-blue-500 focus:border-blue-500">
 
                         @if($searchResults->count() > 0)
-                            <div class="mt-2 max-h-48 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                            <div class="mt-2 max-h-48 overflow-y-auto custom-scrollbar divide-y divide-gray-100 dark:divide-gray-700">
                                 @foreach($searchResults as $user)
                                     <button wire:click="startDirectChat({{ $user->id }})"
                                             @click="showNew = false; showMobileList = false"
@@ -77,7 +77,7 @@
         </div>
 
         {{-- Chat List --}}
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
             @forelse($chats as $chat)
                 @php
                     $unread = $unreadCounts[$chat->id] ?? 0;
@@ -199,7 +199,7 @@
             </div>
 
             {{-- Messages --}}
-            <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3"
+            <div class="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-3"
                  id="chat-messages"
                  x-ref="chatMessages"
                  x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight)">

@@ -49,12 +49,109 @@
         </div>
     </div>
 
+    {{-- Progres Persetujuan --}}
+    @php $instance = $this->latestApproval; @endphp
+    @if($instance)
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Progres Persetujuan — {{ $instance->flow_name }}</h3>
+                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $instance->status->badgeClass() }} self-start sm:self-auto">{{ $instance->status->label() }}</span>
+            </div>
+            <div class="p-6">
+                <div class="space-y-0">
+                    @foreach($instance->steps as $step)
+                        <div wire:key="appr-step-{{ $step->id }}" class="flex gap-4 pb-6 last:pb-0 relative">
+                            <div class="flex flex-col items-center flex-shrink-0">
+                                <span class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+                                    {{ $step->status->value === 'approved' ? 'bg-emerald-500 text-white' :
+                                       ($step->status->value === 'rejected' ? 'bg-red-500 text-white' :
+                                       ($step->status->value === 'active' ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900/50' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400')) }}">
+                                    @if($step->status->value === 'approved')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    @elseif($step->status->value === 'rejected')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    @else
+                                        {{ $step->position }}
+                                    @endif
+                                </span>
+                                @if(!$loop->last)
+                                    <span class="w-px flex-1 mt-1 {{ $step->status->value === 'approved' ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-gray-200 dark:bg-gray-700' }}"></span>
+                                @endif
+                            </div>
+                            <div class="flex-1 min-w-0 pb-2">
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                                    <p class="text-sm font-semibold {{ $step->status->value === 'active' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white' }}">{{ $step->name }}</p>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">mode: {{ $step->mode->label() }}</span>
+                                </div>
+                                <div class="mt-1.5 flex flex-wrap gap-1.5">
+                                    @foreach($step->approvers as $approver)
+                                        @if($step->hasApproverApproved($approver->id))
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                {{ $approver->name }}
+                                            </span>
+                                        @elseif($step->hasApproverRejected($approver->id))
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                {{ $approver->name }}
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs {{ $step->status->value === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }}">{{ $approver->name }}</span>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                @foreach($step->actions as $action)
+                                    <p class="mt-1.5 text-xs {{ $action->action->value === 'approved' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ $action->action->label() }} oleh {{ $action->user->name ?? '-' }} — {{ $action->created_at->format('d/m/Y H:i') }}
+                                        @if($action->note) · "{{ $action->note }}" @endif
+                                    </p>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                @if($pengadaan->userCanActOnApproval(auth()->user()))
+                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-2">
+                        <button wire:click="openApprovePengadaanModal" wire:key="btn-approve-pengadaan"
+                            wire:loading.attr="disabled" wire:target="openApprovePengadaanModal"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors w-full sm:w-auto disabled:opacity-50">
+                            <svg wire:loading.class="hidden" wire:target="openApprovePengadaanModal" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <svg wire:loading wire:target="openApprovePengadaanModal" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            Setujui
+                        </button>
+                        <button wire:click="openRejectPengadaanModal" wire:key="btn-reject-pengadaan"
+                            wire:loading.attr="disabled" wire:target="openRejectPengadaanModal"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors w-full sm:w-auto disabled:opacity-50">
+                            <svg wire:loading.class="hidden" wire:target="openRejectPengadaanModal" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            <svg wire:loading wire:target="openRejectPengadaanModal" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            Tolak
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @elseif($pengadaan->isRejected())
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Pengadaan ini ditolak dan belum memiliki alur persetujuan aktif.</p>
+            @can('update', $pengadaan)
+                <button wire:click="resubmitPengadaan"
+                    wire:loading.attr="disabled" wire:target="resubmitPengadaan" wire:key="btn-resubmit"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors w-full sm:w-auto disabled:opacity-50">
+                    <svg wire:loading.class="hidden" wire:target="resubmitPengadaan" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <svg wire:loading wire:target="resubmitPengadaan" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    Ajukan Ulang
+                </button>
+            @endcan
+        </div>
+    @endif
+
     {{-- Item --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Item ({{ $pengadaan->items->count() }})</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto custom-scrollbar custom-scrollbar">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
@@ -174,6 +271,18 @@
                                 <div class="text-right">
                                     <p class="text-xs text-gray-500 dark:text-gray-400">Jumlah Tagihan</p>
                                     <p class="text-sm font-bold text-gray-900 dark:text-white">Rp {{ number_format($invoice->jumlah, 0, ',', '.') }}</p>
+                                    @if($invoice->total_dibayar > 0)
+                                        <p class="mt-1 text-xs text-emerald-600 dark:text-emerald-400">Terbayar Rp {{ number_format($invoice->total_dibayar, 0, ',', '.') }}</p>
+                                        @if($invoice->sisa_tagihan > 0)
+                                            <p class="text-xs font-medium text-amber-600 dark:text-amber-400">Sisa Rp {{ number_format($invoice->sisa_tagihan, 0, ',', '.') }}</p>
+                                        @elseif($invoice->kelebihan_bayar > 0)
+                                            <p class="text-xs font-medium text-blue-600 dark:text-blue-400">Lebih Bayar Rp {{ number_format($invoice->kelebihan_bayar, 0, ',', '.') }}</p>
+                                        @endif
+                                        <div class="mt-1.5 h-1 w-24 ml-auto rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                            <div class="h-full rounded-full {{ $invoice->kelebihan_bayar > 0 ? 'bg-blue-500' : ($invoice->sisa_tagihan > 0 ? 'bg-amber-500' : 'bg-emerald-500') }}"
+                                                style="width: {{ min(100, $invoice->jumlah > 0 ? ($invoice->total_dibayar / $invoice->jumlah) * 100 : 0) }}%"></div>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="flex items-center gap-1">
                                     @if($invoice->isProcessing())
@@ -219,7 +328,9 @@
                                 @can('update', $pengadaan)
                                     <button wire:click="openCreatePaymentModal({{ $invoice->id }})"
                                         wire:loading.attr="disabled" wire:target="openCreatePaymentModal({{ $invoice->id }})"
-                                        class="text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 disabled:opacity-50">
+                                        wire:key="btn-add-payment-{{ $invoice->id }}"
+                                        class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 disabled:opacity-50">
+                                        <svg wire:loading wire:target="openCreatePaymentModal({{ $invoice->id }})" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                         + Tambah Pembayaran
                                     </button>
                                 @endcan
@@ -230,17 +341,11 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2">
                                             <p class="text-sm text-gray-900 dark:text-white">Rp {{ number_format($payment->jumlah_bayar, 0, ',', '.') }}</p>
-                                            <span class="px-1.5 py-0.5 text-xs font-medium rounded-full {{ $payment->status_approval->badgeClass() }}">
-                                                {{ $payment->status_approval->label() }}
-                                            </span>
                                         </div>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">
                                             {{ $payment->tanggal_bayar->format('d/m/Y') }}
                                             @if($payment->metode_bayar) • {{ $payment->metode_bayar }} @endif
                                         </p>
-                                        @if($payment->status_approval->value === 'rejected' && $payment->rejection_reason)
-                                            <p class="text-xs text-red-600 dark:text-red-400 mt-0.5">Ditolak: {{ $payment->rejection_reason }}</p>
-                                        @endif
                                     </div>
                                     <div class="flex items-center gap-1">
                                         @if($payment->isProcessing())
@@ -261,21 +366,6 @@
                                                 <svg wire:loading wire:target="downloadPaymentFile({{ $payment->id }})" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             </button>
                                         @endif
-                                        @if($payment->isPending())
-                                            @can('approvePayment', [$pengadaan, $payment])
-                                                <button wire:click="confirmApprovePayment({{ $payment->id }})"
-                                                    wire:loading.attr="disabled" wire:target="confirmApprovePayment({{ $payment->id }})"
-                                                    class="text-emerald-600 hover:text-emerald-800 p-1 disabled:opacity-50" title="Setujui pembayaran">
-                                                    <svg wire:loading.class="hidden" wire:target="confirmApprovePayment({{ $payment->id }})" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                    <svg wire:loading wire:target="confirmApprovePayment({{ $payment->id }})" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                </button>
-                                                <button wire:click="confirmRejectPayment({{ $payment->id }})"
-                                                    wire:loading.attr="disabled" wire:target="confirmRejectPayment({{ $payment->id }})"
-                                                    class="text-orange-600 hover:text-orange-800 p-1 disabled:opacity-50" title="Tolak pembayaran">
-                                                    <svg wire:loading.class="hidden" wire:target="confirmRejectPayment({{ $payment->id }})" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    <svg wire:loading wire:target="confirmRejectPayment({{ $payment->id }})" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                </button>
-                                            @endcan
                                             @can('update', $pengadaan)
                                                 <button wire:click="openEditPaymentModal({{ $invoice->id }}, {{ $payment->id }})"
                                                     wire:loading.attr="disabled" wire:target="openEditPaymentModal({{ $invoice->id }}, {{ $payment->id }})"
@@ -290,7 +380,6 @@
                                                     <svg wire:loading wire:target="confirmDeletePayment({{ $payment->id }})" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                                 </button>
                                             @endcan
-                                        @endif
                                     </div>
                                 </div>
                             @empty
@@ -326,7 +415,7 @@
 
     {{-- Modal: Tambah/Edit Invoice --}}
     @if($showInvoiceModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showInvoiceModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar" x-data="{ show: @entangle('showInvoiceModal') }">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.closeInvoiceModal()"></div>
                 <div class="inline-block align-bottom w-full bg-white dark:bg-gray-800 rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
@@ -401,7 +490,7 @@
 
     {{-- Modal: Tambah/Edit Payment --}}
     @if($showPaymentModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showPaymentModal') }">
+        <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar" x-data="{ show: @entangle('showPaymentModal') }">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.closePaymentModal()"></div>
                 <div class="inline-block align-bottom w-full bg-white dark:bg-gray-800 rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
@@ -469,64 +558,54 @@
         confirmMethod="deletePayment"
     />
 
-    {{-- Modal: Approve Payment --}}
-    @if($showApprovePaymentModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto">
+    {{-- Modal: Setujui Pengadaan --}}
+    @if($showApprovePengadaanModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.set('showApprovePaymentModal', false)"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.set('showApprovePengadaanModal', false)"></div>
                 <div class="inline-block align-bottom w-full bg-white dark:bg-gray-800 rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 sm:mx-0 sm:h-10 sm:w-10">
-                                <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            </div>
-                            <div class="mt-3 text-left sm:mt-0 sm:ml-4 flex-1">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Setujui Pembayaran</h3>
-                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Apakah Anda yakin ingin menyetujui pembayaran ini? Nilai akan dihitung sebagai "sudah dibayar".</p>
-                            </div>
+                    <form wire:submit="approvePengadaan">
+                        <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Setujui Pengadaan</h3>
+                            <x-input-label for="approval_note" value="Catatan (opsional)" />
+                            <textarea wire:model="approval_note" id="approval_note" rows="3" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 px-3 py-2 text-sm border" placeholder="Catatan persetujuan..."></textarea>
                         </div>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                        <button wire:click="approvePayment"
-                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-base font-medium rounded-lg shadow-sm transition-all w-full sm:w-auto disabled:opacity-70 disabled:cursor-not-allowed"
-                            wire:loading.attr="disabled" wire:loading.class="opacity-70 cursor-not-allowed" wire:target="approvePayment">
-                            <svg wire:loading wire:target="approvePayment" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                            Setujui
-                        </button>
-                        <x-cancel-button wire:click="$set('showApprovePaymentModal', false)" target="closeApprovePaymentModal" wire:key="btn-approve-payment-cancel" variant="secondary" size="lg" class="mt-3 sm:mt-0 w-full sm:w-auto" />
-                    </div>
+                        <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                            <button type="submit"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-base font-medium rounded-lg shadow-sm transition-all w-full sm:w-auto disabled:opacity-70 disabled:cursor-not-allowed"
+                                wire:loading.attr="disabled" wire:loading.class="opacity-70 cursor-not-allowed" wire:target="approvePengadaan">
+                                <svg wire:loading wire:target="approvePengadaan" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                Setujui
+                            </button>
+                            <x-cancel-button wire:click="$set('showApprovePengadaanModal', false)" target="closeApprovePengadaanModal" wire:key="btn-approve-cancel" variant="secondary" size="lg" class="mt-3 sm:mt-0 w-full sm:w-auto" />
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- Modal: Reject Payment --}}
-    @if($showRejectPaymentModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto">
+    {{-- Modal: Tolak Pengadaan --}}
+    @if($showRejectPengadaanModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.set('showRejectPaymentModal', false)"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.set('showRejectPengadaanModal', false)"></div>
                 <div class="inline-block align-bottom w-full bg-white dark:bg-gray-800 rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <form wire:submit="rejectPayment">
+                    <form wire:submit="rejectPengadaan">
                         <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Tolak Pembayaran</h3>
-                            <x-input-label for="pay_rejection_reason" value="Alasan Penolakan" :required="true" />
-                            <textarea wire:model="pay_rejection_reason" id="pay_rejection_reason" rows="3" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 px-3 py-2 text-sm" placeholder="Jelaskan alasan penolakan..."></textarea>
-                            <x-input-error :messages="$errors->get('pay_rejection_reason')" class="mt-2" />
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Tolak Pengadaan</h3>
+                            <x-input-label for="pengadaan_rejection_reason" value="Alasan Penolakan" :required="true" />
+                            <textarea wire:model="pengadaan_rejection_reason" id="pengadaan_rejection_reason" rows="3" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 px-3 py-2 text-sm border" placeholder="Jelaskan alasan penolakan..."></textarea>
+                            <x-input-error :messages="$errors->get('pengadaan_rejection_reason')" class="mt-2" />
                         </div>
                         <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
                             <button type="submit"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-base font-medium rounded-lg shadow-sm transition-all w-full sm:w-auto disabled:opacity-70 disabled:cursor-not-allowed"
-                                wire:loading.attr="disabled" wire:loading.class="opacity-70 cursor-not-allowed" wire:target="rejectPayment">
-                                <svg wire:loading wire:target="rejectPayment" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                </svg>
+                                wire:loading.attr="disabled" wire:loading.class="opacity-70 cursor-not-allowed" wire:target="rejectPengadaan">
+                                <svg wire:loading wire:target="rejectPengadaan" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                                 Tolak
                             </button>
-                            <x-cancel-button wire:click="$set('showRejectPaymentModal', false)" target="closeRejectPaymentModal" wire:key="btn-reject-payment-cancel" variant="secondary" size="lg" class="mt-3 sm:mt-0 w-full sm:w-auto" />
+                            <x-cancel-button wire:click="$set('showRejectPengadaanModal', false)" target="closeRejectPengadaanModal" wire:key="btn-reject-cancel" variant="secondary" size="lg" class="mt-3 sm:mt-0 w-full sm:w-auto" />
                         </div>
                     </form>
                 </div>

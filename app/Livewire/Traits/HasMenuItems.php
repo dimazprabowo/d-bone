@@ -40,6 +40,7 @@ trait HasMenuItems
             'kategori_item_view' => Gate::allows('viewAny', KategoriItem::class),
             'vendor_view' => Gate::allows('viewAny', Vendor::class),
             'pengadaan_view' => Gate::allows('viewAny', Pengadaan::class),
+            'approval_flow_view' => Gate::allows('approval_flow_view'),
             'notifications_view' => Gate::allows('viewAny', Notification::class),
             'notifications_send' => Gate::allows('send', Notification::class),
             'chat_view' => Gate::allows('viewAny', Chat::class),
@@ -103,11 +104,18 @@ trait HasMenuItems
                 'active' => $req->routeIs('master-data.vendors'),
             ];
         }
+        if ($perms['approval_flow_view']) {
+            $masterDataChildren[] = [
+                'name' => 'Alur Persetujuan',
+                'route' => 'approval-flows.index',
+                'active' => $req->routeIs('approval-flows.*'),
+            ];
+        }
         if (! empty($masterDataChildren)) {
             $items[] = [
                 'name' => 'Master Data',
                 'icon' => 'database',
-                'active' => $req->routeIs('master-data.*'),
+                'active' => $req->routeIs('master-data.*') || $req->routeIs('approval-flows.*'),
                 'children' => $masterDataChildren,
             ];
         }
