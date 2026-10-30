@@ -119,50 +119,48 @@
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
         </div>
 
-        <x-filter-popover width="w-72 sm:w-[30rem]" :filters="['vendorFilter', 'cabangFilter', 'statusFilter', 'bisnisAreaFilter', 'tipeBiayaFilter', 'statusBayarFilter', 'jatuhTempoFilter', 'tanggalDari', 'tanggalSampai', 'totalMin', 'totalMax']">
-            <div class="space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Vendor</label>
-                        <x-searchable-select wire:model.live="vendorFilter" :options="$this->vendorOptions" placeholder="Semua Vendor" searchPlaceholder="Cari vendor..." />
-                    </div>
-                    @can('access_all_cabang')
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cabang</label>
-                            <x-searchable-select wire:model.live="cabangFilter" :options="$this->cabangOptions" placeholder="Semua Cabang" searchPlaceholder="Cari cabang..." />
-                        </div>
-                    @endcan
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Bisnis Area</label>
-                        <x-searchable-select wire:model.live="bisnisAreaFilter" :options="$this->bisnisAreaOptions" placeholder="Semua Bisnis Area" searchPlaceholder="Cari bisnis area..." />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipe Biaya</label>
-                        <x-searchable-select wire:model.live="tipeBiayaFilter" :options="$this->tipeBiayaOptions" placeholder="Semua Tipe" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status Approval</label>
-                        <x-searchable-select wire:model.live="statusFilter" :options="$this->statusOptions" placeholder="Semua Status" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status Pembayaran</label>
-                        <x-searchable-select wire:model.live="statusBayarFilter" :options="$this->statusBayarOptions" placeholder="Semua Status" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Jatuh Tempo</label>
-                        <x-searchable-select wire:model.live="jatuhTempoFilter" :options="$this->jatuhTempoOptions" placeholder="Semua" />
-                    </div>
+        <x-filter-popover width="w-72 sm:w-[30rem] lg:w-[42rem]" columns="3" :filters="['vendorFilter', 'cabangFilter', 'statusFilter', 'bisnisAreaFilter', 'tipeBiayaFilter', 'statusBayarFilter', 'jatuhTempoFilter', 'tanggalDari', 'tanggalSampai', 'totalMin', 'totalMax']">
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Vendor</label>
+                <x-searchable-select wire:model.live="vendorFilter" :options="$this->vendorOptions" placeholder="Semua Vendor" searchPlaceholder="Cari vendor..." />
+            </div>
+            @can('access_all_cabang')
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cabang</label>
+                    <x-searchable-select wire:model.live="cabangFilter" :options="$this->cabangOptions" placeholder="Semua Cabang" searchPlaceholder="Cari cabang..." />
                 </div>
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
-                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Rentang Tanggal SPK</label>
-                    <div class="grid grid-cols-2 gap-3">
+            @endcan
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Bisnis Area</label>
+                <x-searchable-select wire:model.live="bisnisAreaFilter" :options="$this->bisnisAreaOptions" placeholder="Semua Bisnis Area" searchPlaceholder="Cari bisnis area..." />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipe Biaya</label>
+                <x-searchable-select wire:model.live="tipeBiayaFilter" :options="$this->tipeBiayaOptions" placeholder="Semua Tipe" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status Approval</label>
+                <x-searchable-select wire:model.live="statusFilter" :options="$this->statusOptions" placeholder="Semua Status" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status Pembayaran</label>
+                <x-searchable-select wire:model.live="statusBayarFilter" :options="$this->statusBayarOptions" placeholder="Semua Status" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Jatuh Tempo</label>
+                <x-searchable-select wire:model.live="jatuhTempoFilter" :options="$this->jatuhTempoOptions" placeholder="Semua" />
+            </div>
+            <div class="sm:col-span-2 lg:col-span-3 border-t border-gray-200 dark:border-gray-700 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Rentang Tanggal SPK</label>
+                    <div class="grid grid-cols-2 gap-2">
                         <x-date-picker wire:model.live="tanggalDari" placeholder="Dari" />
                         <x-date-picker wire:model.live="tanggalSampai" placeholder="Sampai" />
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Rentang Total Biaya</label>
-                    <div class="grid grid-cols-2 gap-3">
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Rentang Total Biaya</label>
+                    <div class="grid grid-cols-2 gap-2">
                         <x-rupiah-input wireModel="totalMin" placeholder="Min" />
                         <x-rupiah-input wireModel="totalMax" placeholder="Maks" />
                     </div>

@@ -1,7 +1,16 @@
 @props([
     'filters' => [],
     'width' => 'w-72',
+    'columns' => 1,
 ])
+
+@php
+    $fieldsClass = match ((int) $columns) {
+        2 => 'grid grid-cols-1 sm:grid-cols-2 gap-3',
+        3 => 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3',
+        default => 'space-y-3',
+    };
+@endphp
 
 <div class="relative w-full md:w-auto" x-data="{ filterOpen: false, dropUp: false,
         checkPosition() {
@@ -10,7 +19,7 @@
             const rect = trigger.getBoundingClientRect();
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceAbove = rect.top;
-            const popoverHeight = 320;
+            const popoverHeight = this.$refs.panel?.offsetHeight || 320;
             this.dropUp = spaceBelow < popoverHeight && spaceAbove > spaceBelow;
         },
         toggleFilter() {
@@ -39,8 +48,9 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
-        class="absolute right-0 {{ $width }} max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 p-4">
-        <div class="space-y-3">
+        class="absolute right-0 {{ $width }} max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 p-4"
+        x-ref="panel">
+        <div class="{{ $fieldsClass }}">
             {{ $slot }}
         </div>
 

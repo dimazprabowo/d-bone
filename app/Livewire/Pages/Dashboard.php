@@ -35,6 +35,8 @@ class Dashboard extends Component
             if (Gate::allows('pengadaan_view')) {
                 $pengadaanService = app(PengadaanService::class);
                 $data['pengadaanStats'] = $pengadaanService->getDashboardStats();
+                $data['monthlyTrend'] = $pengadaanService->getMonthlyTrend();
+                $data['trendMax'] = max(1, collect($data['monthlyTrend'])->max('total'));
                 $data['pengadaanPerVendor'] = $pengadaanService->getSpendPerVendor();
 
                 if (Gate::allows('access_all_cabang')) {

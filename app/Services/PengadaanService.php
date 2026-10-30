@@ -490,6 +490,51 @@ class PengadaanService
     }
 
     /**
+     * Tren total biaya per bulan (Pengadaan Approved) untuk grafik dashboard.
+     * Cabang-scoped, 12 bulan terakhir termasuk bulan berjalan.
+     *
+     * @return array<int, array{key: string, label: string, total: float, count: int}>
+     */
+    public function getMonthlyTrend(int $months = 12): array
+    {
+        $driver = DB::connection()->getDriverName();
+        $monthExpr = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', tanggal_pesanan_spk)",
+            'pgsql' => "to_char(tanggal_pesanan_spk, 'YYYY-MM')",
+            default => "DATE_FORMAT(tanggal_pesanan_spk, '%Y-%m')",
+        };
+
+        $start = now()->startOfMonth()->subMonths($months - 1);
+
+        $query = Pengadaan::query()->approved()
+            ->where('tanggal_pesanan_spk', '>=', $start)
+            ->selectRaw("{$monthExpr} as ym")
+            ->selectRaw('SUM(total_biaya) as total')
+            ->selectRaw('COUNT(*) as cnt')
+            ->groupByRaw($monthExpr);
+
+        $this->applyCabangScope($query, auth()->user()?->cabang_id);
+
+        $rows = $query->get()->keyBy('ym');
+
+        $result = [];
+        for ($i = 0; $i < $months; $i++) {
+            $period = $start->copy()->addMonths($i);
+            $key = $period->format('Y-m');
+            $row = $rows->get($key);
+
+            $result[] = [
+                'key' => $key,
+                'label' => $period->translatedFormat('M'),
+                'total' => (float) ($row->total ?? 0),
+                'count' => (int) ($row->cnt ?? 0),
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
      * Top vendor by total spend (Pengadaan Approved), untuk dashboard.
      * Cabang-scoped seperti getDashboardStats().
      */
