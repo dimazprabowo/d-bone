@@ -39,7 +39,7 @@ class UserSeeder extends Seeder
                 'name' => 'Admin Cabang Tanjung Priok',
                 'password' => Hash::make('password'),
                 'phone' => '021-1234568',
-                'position' => 'Kepala Cabang',
+                'position' => 'Admin Cabang',
                 'cabang_id' => $cabangPriok?->id,
                 'role' => 'admin cabang',
             ],
