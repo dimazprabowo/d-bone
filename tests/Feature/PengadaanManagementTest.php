@@ -59,6 +59,41 @@ class PengadaanManagementTest extends TestCase
             ->assertSee('SPK-TEST-001');
     }
 
+    public function test_dropdown_filters_accept_multiple_values(): void
+    {
+        $user = $this->actingUserWithPermissions(['pengadaan_view']);
+        $vendorA = Vendor::factory()->create();
+        $vendorB = Vendor::factory()->create();
+        $vendorC = Vendor::factory()->create();
+        Pengadaan::factory()->create(['vendor_id' => $vendorA->id, 'no_pesanan_spk' => 'SPK-MULTI-A']);
+        Pengadaan::factory()->create(['vendor_id' => $vendorB->id, 'no_pesanan_spk' => 'SPK-MULTI-B']);
+        Pengadaan::factory()->create(['vendor_id' => $vendorC->id, 'no_pesanan_spk' => 'SPK-MULTI-C']);
+
+        $this->actingAs($user);
+
+        Livewire::test(PengadaanManagement::class)
+            ->set('vendorFilter', [$vendorA->id, $vendorB->id])
+            ->assertSee('SPK-MULTI-A')
+            ->assertSee('SPK-MULTI-B')
+            ->assertDontSee('SPK-MULTI-C');
+    }
+
+    public function test_multiple_status_approval_values_filter_together(): void
+    {
+        $user = $this->actingUserWithPermissions(['pengadaan_view']);
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-PENDING-1', 'status_approval' => 'pending']);
+        Pengadaan::factory()->approved()->create(['no_pesanan_spk' => 'SPK-APPROVED-1']);
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-REJECTED-1', 'status_approval' => 'rejected']);
+
+        $this->actingAs($user);
+
+        Livewire::test(PengadaanManagement::class)
+            ->set('statusFilter', ['pending', 'approved'])
+            ->assertSee('SPK-PENDING-1')
+            ->assertSee('SPK-APPROVED-1')
+            ->assertDontSee('SPK-REJECTED-1');
+    }
+
     public function test_user_can_create_pengadaan_with_items(): void
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_create']);

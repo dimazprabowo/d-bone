@@ -22,15 +22,15 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
 
     protected ?string $search;
 
-    protected ?string $vendorFilter;
+    protected array $vendorFilter;
 
-    protected ?string $cabangFilter;
+    protected array $cabangFilter;
 
-    protected ?string $statusFilter;
+    protected array $statusFilter;
 
     protected array $filters;
 
-    public function __construct(?string $search = null, ?string $vendorFilter = null, ?string $cabangFilter = null, ?string $statusFilter = null, array $filters = [])
+    public function __construct(?string $search = null, array $vendorFilter = [], array $cabangFilter = [], array $statusFilter = [], array $filters = [])
     {
         $this->search = $search;
         $this->vendorFilter = $vendorFilter;
@@ -46,8 +46,8 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
         $canAccessAll = Auth::check() && Auth::user()->can('access_all_cabang');
         if (! $canAccessAll) {
             $query->where('cabang_id', Auth::user()?->cabang_id);
-        } elseif ($this->cabangFilter) {
-            $query->where('cabang_id', $this->cabangFilter);
+        } elseif ($this->cabangFilter !== []) {
+            $query->whereIn('cabang_id', $this->cabangFilter);
         }
 
         if ($this->search) {
@@ -60,12 +60,12 @@ class PengadaanExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMa
             });
         }
 
-        if ($this->vendorFilter) {
-            $query->where('vendor_id', $this->vendorFilter);
+        if ($this->vendorFilter !== []) {
+            $query->whereIn('vendor_id', $this->vendorFilter);
         }
 
-        if ($this->statusFilter) {
-            $query->where('status_approval', $this->statusFilter);
+        if ($this->statusFilter !== []) {
+            $query->whereIn('status_approval', $this->statusFilter);
         }
 
         app(PengadaanService::class)->applyAdvancedFilters($query, $this->filters);

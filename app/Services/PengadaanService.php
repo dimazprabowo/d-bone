@@ -27,22 +27,22 @@ class PengadaanService
      * cocok dengan cabang mereka sendiri. Users WITH the permission (Super Admin, Admin Pusat)
      * see all pengadaan — optionally narrowed by an explicit cabang filter.
      */
-    protected function applyCabangScope($query, ?int $userCabangId, ?string $explicitCabangFilter = null): void
+    protected function applyCabangScope($query, ?int $userCabangId, array $explicitCabangFilter = []): void
     {
         $canAccessAll = auth()->check() && auth()->user()->can('access_all_cabang');
 
         if (! $canAccessAll) {
             $query->where('cabang_id', $userCabangId);
-        } elseif ($explicitCabangFilter !== null && $explicitCabangFilter !== '') {
-            $query->where('cabang_id', $explicitCabangFilter);
+        } elseif ($explicitCabangFilter !== []) {
+            $query->whereIn('cabang_id', $explicitCabangFilter);
         }
     }
 
     public function getFiltered(
         ?string $search = null,
-        ?string $vendorFilter = null,
-        ?string $cabangFilter = null,
-        ?string $statusFilter = null,
+        array $vendorFilter = [],
+        array $cabangFilter = [],
+        array $statusFilter = [],
         int $perPage = 15,
         string $sortField = 'tanggal_pesanan_spk',
         string $sortDirection = 'desc',
@@ -78,7 +78,7 @@ class PengadaanService
      * dan filter lanjutan) ke query — dipakai ulang oleh getFiltered
      * dan getFilteredStats.
      */
-    protected function applyListFilters($query, ?string $search, ?string $vendorFilter, ?string $cabangFilter, ?string $statusFilter, array $filters): void
+    protected function applyListFilters($query, ?string $search, array $vendorFilter, array $cabangFilter, array $statusFilter, array $filters): void
     {
         $userCabangId = auth()->check() ? auth()->user()->cabang_id : null;
         $this->applyCabangScope($query, $userCabangId, $cabangFilter);
@@ -93,12 +93,12 @@ class PengadaanService
             });
         }
 
-        if ($vendorFilter !== null && $vendorFilter !== '') {
-            $query->where('vendor_id', $vendorFilter);
+        if ($vendorFilter !== []) {
+            $query->whereIn('vendor_id', $vendorFilter);
         }
 
-        if ($statusFilter !== null && $statusFilter !== '') {
-            $query->where('status_approval', $statusFilter);
+        if ($statusFilter !== []) {
+            $query->whereIn('status_approval', $statusFilter);
         }
 
         $this->applyAdvancedFilters($query, $filters);
@@ -110,9 +110,9 @@ class PengadaanService
      */
     public function getFilteredStats(
         ?string $search = null,
-        ?string $vendorFilter = null,
-        ?string $cabangFilter = null,
-        ?string $statusFilter = null,
+        array $vendorFilter = [],
+        array $cabangFilter = [],
+        array $statusFilter = [],
         array $filters = []
     ): array {
         $query = Pengadaan::query();
@@ -157,11 +157,11 @@ class PengadaanService
     public function applyAdvancedFilters($query, array $filters): void
     {
         if (! empty($filters['bisnis_area_id'])) {
-            $query->where('bisnis_area_id', $filters['bisnis_area_id']);
+            $query->whereIn('bisnis_area_id', (array) $filters['bisnis_area_id']);
         }
 
         if (! empty($filters['tipe_biaya'])) {
-            $query->where('tipe_biaya', $filters['tipe_biaya']);
+            $query->whereIn('tipe_biaya', (array) $filters['tipe_biaya']);
         }
 
         if (! empty($filters['status_bayar'])) {
@@ -170,17 +170,29 @@ class PengadaanService
             $paid = '(SELECT COALESCE(SUM(ip.jumlah_bayar), 0) FROM invoice_payments ip INNER JOIN invoices i3 ON i3.id = ip.invoice_id WHERE i3.pengadaan_id = pengadaans.id)';
             $expr = "CASE WHEN NOT $hasInv THEN 0 WHEN $paid <= 0 THEN 1 WHEN $paid >= $inv THEN 3 ELSE 2 END";
             $map = ['belum_ditagih' => 0, 'belum_dibayar' => 1, 'sebagian' => 2, 'lunas' => 3];
-            $query->whereRaw("$expr = ?", [$map[$filters['status_bayar']] ?? -1]);
+            $codes = array_values(array_map(
+                fn ($v) => $map[$v],
+                array_intersect((array) $filters['status_bayar'], array_keys($map))
+            ));
+
+            if ($codes !== []) {
+                $query->whereRaw("$expr IN (".implode(',', array_fill(0, count($codes), '?')).')', $codes);
+            }
         }
 
         if (! empty($filters['jatuh_tempo'])) {
             $warnDays = ConfigHelper::getJatuhTempoWarningDays();
-            match ($filters['jatuh_tempo']) {
-                'lewat' => $query->whereNotNull('tanggal_jatuh_tempo')->where('tanggal_jatuh_tempo', '<', today()),
-                'proses' => $query->whereNotNull('tanggal_jatuh_tempo')->whereBetween('tanggal_jatuh_tempo', [today(), today()->addDays($warnDays)]),
-                'aman' => $query->where(fn ($q) => $q->whereNull('tanggal_jatuh_tempo')->orWhere('tanggal_jatuh_tempo', '>', today()->addDays($warnDays))),
-                default => null,
-            };
+            $dueSoon = today()->addDays($warnDays);
+            $query->where(function ($q) use ($filters, $dueSoon) {
+                foreach ((array) $filters['jatuh_tempo'] as $status) {
+                    match ($status) {
+                        'lewat' => $q->orWhere(fn ($qq) => $qq->whereNotNull('tanggal_jatuh_tempo')->where('tanggal_jatuh_tempo', '<', today())),
+                        'proses' => $q->orWhere(fn ($qq) => $qq->whereNotNull('tanggal_jatuh_tempo')->whereBetween('tanggal_jatuh_tempo', [today(), $dueSoon])),
+                        'aman' => $q->orWhere(fn ($qq) => $qq->whereNull('tanggal_jatuh_tempo')->orWhere('tanggal_jatuh_tempo', '>', $dueSoon)),
+                        default => null,
+                    };
+                }
+            });
         }
 
         if (! empty($filters['tanggal_dari'])) {

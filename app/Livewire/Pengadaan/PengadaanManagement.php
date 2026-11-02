@@ -25,19 +25,19 @@ class PengadaanManagement extends Component
 
     public $search = '';
 
-    public $vendorFilter = '';
+    public array $vendorFilter = [];
 
-    public $cabangFilter = '';
+    public array $cabangFilter = [];
 
-    public $statusFilter = '';
+    public array $statusFilter = [];
 
-    public $bisnisAreaFilter = '';
+    public array $bisnisAreaFilter = [];
 
-    public $tipeBiayaFilter = '';
+    public array $tipeBiayaFilter = [];
 
-    public $statusBayarFilter = '';
+    public array $statusBayarFilter = [];
 
-    public $jatuhTempoFilter = '';
+    public array $jatuhTempoFilter = [];
 
     public $tanggalDari = '';
 
