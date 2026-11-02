@@ -47,7 +47,7 @@ class UserService
             $query->where('approval_status', $approvalStatus);
         }
 
-        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
+        $sortable = ['name', 'email', 'phone', 'position', 'is_active', 'approval_status', 'created_at'];
         $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
         $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
 

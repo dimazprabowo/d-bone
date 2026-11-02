@@ -5,10 +5,10 @@ namespace App\Livewire\Settings;
 use App\Enums\UserApprovalStatus;
 use App\Exports\UsersExport;
 use App\Livewire\Traits\HasNotification;
+use App\Livewire\Traits\WithSorting;
 use App\Models\Cabang;
 use App\Models\User;
 use App\Services\UserService;
-use AppWithSorting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -19,7 +19,7 @@ use Spatie\Permission\Models\Role;
 
 class UserManagement extends Component
 {
-    use AppWithSorting, AuthorizesRequests, HasNotification, WithPagination;
+    use AuthorizesRequests, HasNotification, WithPagination, WithSorting;
 
     protected $paginationTheme = 'tailwind';
 

@@ -180,7 +180,7 @@ class PengadaanService
             }
         }
 
-        if (! empty($filters['jatuh_tempo'])) {
+        if (! empty($filters['jatuh_tempo']) && ConfigHelper::isJatuhTempoWarningEnabled()) {
             $warnDays = ConfigHelper::getJatuhTempoWarningDays();
             $dueSoon = today()->addDays($warnDays);
             $query->where(function ($q) use ($filters, $dueSoon) {
@@ -418,7 +418,9 @@ class PengadaanService
     public function getDashboardStats(): array
     {
         $today = now()->format('Y-m-d');
-        $dueThreshold = now()->addDays(7)->format('Y-m-d');
+        $dueThreshold = ConfigHelper::isJatuhTempoWarningEnabled()
+            ? now()->addDays(ConfigHelper::getJatuhTempoWarningDays())->format('Y-m-d')
+            : null;
 
         $userCabangId = auth()->check() ? auth()->user()->cabang_id : null;
 
@@ -469,7 +471,7 @@ class PengadaanService
 
         // Invoice due/overdue (dari collection yang sudah di-load, cegah N+1)
         $invoiceOverdue = $invoices->filter(fn ($i) => $i->jatuh_tempo && $i->jatuh_tempo->format('Y-m-d') < $today && (float) ($i->total_dibayar_approved ?? 0) < (float) $i->jumlah)->count();
-        $invoiceDueSoon = $invoices->filter(fn ($i) => $i->jatuh_tempo && $i->jatuh_tempo->format('Y-m-d') >= $today && $i->jatuh_tempo->format('Y-m-d') <= $dueThreshold && (float) ($i->total_dibayar_approved ?? 0) < (float) $i->jumlah)->count();
+        $invoiceDueSoon = $dueThreshold === null ? 0 : $invoices->filter(fn ($i) => $i->jatuh_tempo && $i->jatuh_tempo->format('Y-m-d') >= $today && $i->jatuh_tempo->format('Y-m-d') <= $dueThreshold && (float) ($i->total_dibayar_approved ?? 0) < (float) $i->jumlah)->count();
 
         // Action items: pending approvals (cabang-scoped, semua status)
         $pengadaanTotal = (int) $allQuery()->count();

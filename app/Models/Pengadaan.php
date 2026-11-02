@@ -223,7 +223,9 @@ class Pengadaan extends Model
 
     public function getJatuhTempoAlertAttribute(): ?JatuhTempoStatus
     {
-        if (! $this->tanggal_jatuh_tempo || $this->status_pembayaran === StatusPembayaranPengadaan::Lunas) {
+        if (! $this->tanggal_jatuh_tempo
+            || $this->status_pembayaran === StatusPembayaranPengadaan::Lunas
+            || ! ConfigHelper::isJatuhTempoWarningEnabled()) {
             return null;
         }
 

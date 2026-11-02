@@ -83,7 +83,7 @@ class SystemConfigurationSeeder extends Seeder
                 'category' => 'pengadaan',
                 'value' => '7',
                 'data_type' => 'integer',
-                'description' => 'Jumlah hari sebelum Jatuh Tempo untuk status alert "Proses" (kuning) pada daftar Pengadaan. Lewat tanggal = "Lewat" (merah), lebih dari ambang = "Aman" (hijau).',
+                'description' => 'Jumlah hari sebelum Jatuh Tempo untuk status alert "Proses" (kuning) pada daftar Pengadaan. Lewat tanggal = "Lewat" (merah), lebih dari ambang = "Aman" (hijau). Nonaktifkan konfigurasi ini untuk mematikan seluruh alert jatuh tempo.',
                 'is_editable' => true,
                 'is_active' => true,
             ],

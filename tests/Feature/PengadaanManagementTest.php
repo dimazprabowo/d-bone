@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\JatuhTempoStatus;
 use App\Livewire\Pengadaan\PengadaanForm;
 use App\Livewire\Pengadaan\PengadaanManagement;
 use App\Models\ApprovalFlow;
@@ -11,6 +12,7 @@ use App\Models\KategoriItem;
 use App\Models\Klaster;
 use App\Models\Pengadaan;
 use App\Models\Satuan;
+use App\Models\SystemConfiguration;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\ApprovalService;
@@ -324,5 +326,43 @@ class PengadaanManagementTest extends TestCase
             ->call('delete');
 
         $this->assertSoftDeleted('pengadaans', ['id' => $pengadaan->id]);
+    }
+
+    public function test_jatuh_tempo_alert_uses_configured_warning_days(): void
+    {
+        SystemConfiguration::create([
+            'key' => 'pengadaan.jatuh_tempo_warning_days',
+            'category' => 'pengadaan',
+            'value' => '7',
+            'data_type' => 'integer',
+            'is_editable' => true,
+            'is_active' => true,
+        ]);
+
+        $dueSoon = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->addDays(3)]);
+        $overdue = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->subDay()]);
+        $safe = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->addDays(30)]);
+
+        $this->assertSame(JatuhTempoStatus::Proses, $dueSoon->jatuh_tempo_alert);
+        $this->assertSame(JatuhTempoStatus::Lewat, $overdue->jatuh_tempo_alert);
+        $this->assertSame(JatuhTempoStatus::Aman, $safe->jatuh_tempo_alert);
+    }
+
+    public function test_jatuh_tempo_alert_disabled_when_config_inactive(): void
+    {
+        SystemConfiguration::create([
+            'key' => 'pengadaan.jatuh_tempo_warning_days',
+            'category' => 'pengadaan',
+            'value' => '7',
+            'data_type' => 'integer',
+            'is_editable' => true,
+            'is_active' => false,
+        ]);
+
+        $dueSoon = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->addDays(3)]);
+        $overdue = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->subDay()]);
+
+        $this->assertNull($dueSoon->jatuh_tempo_alert);
+        $this->assertNull($overdue->jatuh_tempo_alert);
     }
 }

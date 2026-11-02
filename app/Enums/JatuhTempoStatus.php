@@ -6,6 +6,7 @@ namespace App\Enums;
  * Status derived untuk alert jatuh tempo pembayaran Pengadaan.
  * Ambang "Proses" (kuning) diatur via System Configuration
  * `pengadaan.jatuh_tempo_warning_days` (lihat ConfigHelper::getJatuhTempoWarningDays()).
+ * Menonaktifkan konfigurasi tersebut mematikan seluruh alert jatuh tempo.
  */
 enum JatuhTempoStatus: string
 {

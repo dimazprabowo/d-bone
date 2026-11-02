@@ -57,17 +57,27 @@ class SystemConfiguration extends Model
     // Static Methods
     public static function get(string $key, $default = null)
     {
-        $raw = Cache::remember(self::cacheKey($key), 3600, function () use ($key) {
+        $raw = self::rawValue($key);
+
+        return $raw === false
+            ? $default
+            : ConfigDataType::from($raw['data_type'])->cast((string) $raw['value']);
+    }
+
+    public static function isActive(string $key): bool
+    {
+        return self::rawValue($key) !== false;
+    }
+
+    private static function rawValue(string $key): array|false
+    {
+        return Cache::remember(self::cacheKey($key), 3600, function () use ($key) {
             $config = self::where('key', $key)->where('is_active', true)->first();
 
             return $config
                 ? ['value' => $config->value, 'data_type' => $config->getRawOriginal('data_type')]
                 : false;
         });
-
-        return $raw === false
-            ? $default
-            : ConfigDataType::from($raw['data_type'])->cast((string) $raw['value']);
     }
 
     private static function cacheKey(string $key): string

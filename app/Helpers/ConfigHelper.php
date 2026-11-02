@@ -136,6 +136,15 @@ class ConfigHelper
     }
 
     /**
+     * Apakah alert jatuh tempo pengadaan aktif. Menonaktifkan konfigurasi
+     * (is_active=false) mematikan seluruh alert jatuh tempo.
+     */
+    public static function isJatuhTempoWarningEnabled(): bool
+    {
+        return SystemConfiguration::isActive('pengadaan.jatuh_tempo_warning_days');
+    }
+
+    /**
      * Get application name from system configuration
      */
     public static function getAppName(): string

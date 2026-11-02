@@ -6,6 +6,7 @@ use App\Enums\JatuhTempoStatus;
 use App\Enums\PengadaanApprovalStatus;
 use App\Enums\TipeBiaya;
 use App\Exports\PengadaanExport;
+use App\Helpers\ConfigHelper;
 use App\Livewire\Traits\HasNotification;
 use App\Models\BisnisArea;
 use App\Models\Cabang;
@@ -231,6 +232,11 @@ class PengadaanManagement extends Component
             'value' => $c->value,
             'label' => $c->label(),
         ])->toArray();
+    }
+
+    public function getJatuhTempoWarningEnabledProperty(): bool
+    {
+        return ConfigHelper::isJatuhTempoWarningEnabled();
     }
 
     protected function activeFilters(): array

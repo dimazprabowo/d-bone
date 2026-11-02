@@ -146,10 +146,12 @@
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status Pembayaran</label>
                 <x-multi-searchable-select wire:model.live="statusBayarFilter" :options="$this->statusBayarOptions" placeholder="Semua Status" wire:key="filter-status-bayar" />
             </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Jatuh Tempo</label>
-                <x-multi-searchable-select wire:model.live="jatuhTempoFilter" :options="$this->jatuhTempoOptions" placeholder="Semua" wire:key="filter-jatuh-tempo" />
-            </div>
+            @if($this->jatuhTempoWarningEnabled)
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Jatuh Tempo</label>
+                    <x-multi-searchable-select wire:model.live="jatuhTempoFilter" :options="$this->jatuhTempoOptions" placeholder="Semua" wire:key="filter-jatuh-tempo" />
+                </div>
+            @endif
             <div class="sm:col-span-2 lg:col-span-3 border-t border-gray-200 dark:border-gray-700 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Rentang Tanggal SPK</label>
