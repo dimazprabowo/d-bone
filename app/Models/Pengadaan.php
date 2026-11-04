@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -35,7 +36,6 @@ class Pengadaan extends Model
         'bisnis_area_id',
         'cabang_id',
         'tanggal_pesanan_spk',
-        'tanggal_jatuh_tempo',
         'total_biaya',
         'status_approval',
         'approved_by',
@@ -46,7 +46,6 @@ class Pengadaan extends Model
 
     protected $casts = [
         'tanggal_pesanan_spk' => 'date',
-        'tanggal_jatuh_tempo' => 'date',
         'total_biaya' => 'decimal:2',
         'status_approval' => PengadaanApprovalStatus::class,
         'tipe_biaya' => TipeBiaya::class,
@@ -62,7 +61,7 @@ class Pengadaan extends Model
             ->logOnly([
                 'no_pesanan_spk', 'nama_pemohon', 'tipe_biaya', 'nama_project', 'no_wbs',
                 'vendor_id',
-                'bisnis_area_id', 'cabang_id', 'tanggal_pesanan_spk', 'tanggal_jatuh_tempo',
+                'bisnis_area_id', 'cabang_id', 'tanggal_pesanan_spk',
                 'total_biaya', 'status_approval', 'rejection_reason',
             ])
             ->logOnlyDirty()
@@ -88,6 +87,15 @@ class Pengadaan extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Slug no pesanan/SPK untuk segmen path file.
+     * Fallback ke id bila nomor kosong agar folder file tetap unik.
+     */
+    public function getSpkSlugAttribute(): string
+    {
+        return Str::slug($this->no_pesanan_spk ?? '') ?: 'pengadaan-'.$this->id;
     }
 
     public static function approvalEntityType(): string
@@ -221,23 +229,34 @@ class Pengadaan extends Model
         return max(0.0, (float) $this->total_biaya - $invoices->sum('total_dibayar'));
     }
 
-    public function getJatuhTempoAlertAttribute(): ?JatuhTempoStatus
+    /**
+     * Status jatuh tempo terburuk dari invoice yang belum lunas
+     * (Lewat > Proses > Aman). Null bila tidak ada invoice aktif
+     * atau alert dinonaktifkan di konfigurasi.
+     */
+    public function getJatuhTempoStatusAttribute(): ?JatuhTempoStatus
     {
-        if (! $this->tanggal_jatuh_tempo
-            || $this->status_pembayaran === StatusPembayaranPengadaan::Lunas
-            || ! ConfigHelper::isJatuhTempoWarningEnabled()) {
+        if (! ConfigHelper::isJatuhTempoWarningEnabled()) {
             return null;
         }
 
-        if ($this->tanggal_jatuh_tempo->lt(today())) {
+        $invoices = $this->relationLoaded('invoices')
+            ? $this->invoices
+            : $this->invoices()->with('payments')->get();
+
+        $statuses = $invoices->map->jatuh_tempo_status->filter();
+
+        if ($statuses->isEmpty()) {
+            return null;
+        }
+
+        if ($statuses->contains(JatuhTempoStatus::Lewat)) {
             return JatuhTempoStatus::Lewat;
         }
 
-        if ($this->tanggal_jatuh_tempo->lte(today()->addDays(ConfigHelper::getJatuhTempoWarningDays()))) {
-            return JatuhTempoStatus::Proses;
-        }
-
-        return JatuhTempoStatus::Aman;
+        return $statuses->contains(JatuhTempoStatus::Proses)
+            ? JatuhTempoStatus::Proses
+            : JatuhTempoStatus::Aman;
     }
 
     public function getStatusPembayaranAttribute(): StatusPembayaranPengadaan

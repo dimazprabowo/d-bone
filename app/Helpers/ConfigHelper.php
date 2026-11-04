@@ -127,12 +127,22 @@ class ConfigHelper
     }
 
     /**
-     * Ambang hari sebelum jatuh tempo untuk alert "Proses" (kuning)
-     * pada kolom Jatuh Tempo pengadaan.
+     * Ambang umur invoice (hari sejak tanggal terbit) untuk status "Proses"
+     * (kuning) pada kolom Jatuh Tempo pengadaan.
      */
     public static function getJatuhTempoWarningDays(): int
     {
-        return max(0, (int) SystemConfiguration::get('pengadaan.jatuh_tempo_warning_days', 7));
+        return max(0, (int) SystemConfiguration::get('pengadaan.jatuh_tempo_warning_days', 30));
+    }
+
+    /**
+     * Ambang umur invoice (hari sejak tanggal terbit) untuk status "Lewat"
+     * (merah) — juga menentukan tanggal jatuh tempo derived
+     * (tanggal invoice + overdue_days).
+     */
+    public static function getJatuhTempoOverdueDays(): int
+    {
+        return max(1, (int) SystemConfiguration::get('pengadaan.jatuh_tempo_overdue_days', 60));
     }
 
     /**

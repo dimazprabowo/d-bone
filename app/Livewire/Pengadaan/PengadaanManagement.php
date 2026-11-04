@@ -76,6 +76,10 @@ class PengadaanManagement extends Component
 
     public $historyPengadaan = null;
 
+    public $showJatuhTempoModal = false;
+
+    public $jatuhTempoPengadaan = null;
+
     public function mount()
     {
         $this->authorize('viewAny', Pengadaan::class);
@@ -94,6 +98,20 @@ class PengadaanManagement extends Component
     public function closeHistoryModal(): void
     {
         $this->reset(['showHistoryModal', 'historyPengadaan']);
+    }
+
+    public function openJatuhTempoDetail(int $id): void
+    {
+        $pengadaan = Pengadaan::with('invoices.payments')->findOrFail($id);
+
+        $this->authorize('view', $pengadaan);
+        $this->jatuhTempoPengadaan = $pengadaan;
+        $this->showJatuhTempoModal = true;
+    }
+
+    public function closeJatuhTempoModal(): void
+    {
+        $this->reset(['showJatuhTempoModal', 'jatuhTempoPengadaan']);
     }
 
     public function updatingSearch()
@@ -279,7 +297,7 @@ class PengadaanManagement extends Component
     {
         $pengadaan = Pengadaan::findOrFail($id);
         $this->deletingPengadaanId = $pengadaan->id;
-        $this->deletingPengadaanName = $pengadaan->no_pesanan_spk;
+        $this->deletingPengadaanName = $pengadaan->no_pesanan_spk ?? '-';
         $this->showDeleteModal = true;
     }
 
@@ -305,7 +323,7 @@ class PengadaanManagement extends Component
         $this->authorize('approve', $pengadaan);
 
         $this->reviewingPengadaanId = $pengadaan->id;
-        $this->reviewingPengadaanName = $pengadaan->no_pesanan_spk;
+        $this->reviewingPengadaanName = $pengadaan->no_pesanan_spk ?? '-';
         $this->showApproveModal = true;
     }
 
@@ -331,7 +349,7 @@ class PengadaanManagement extends Component
         $this->authorize('approve', $pengadaan);
 
         $this->reviewingPengadaanId = $pengadaan->id;
-        $this->reviewingPengadaanName = $pengadaan->no_pesanan_spk;
+        $this->reviewingPengadaanName = $pengadaan->no_pesanan_spk ?? '-';
         $this->rejectionReason = '';
         $this->showRejectModal = true;
     }

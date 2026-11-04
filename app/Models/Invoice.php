@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\FileStatus;
+use App\Enums\JatuhTempoStatus;
 use App\Enums\StatusPembayaranPengadaan;
+use App\Helpers\ConfigHelper;
 use App\Traits\Blameable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -21,7 +24,6 @@ class Invoice extends Model
         'no_invoice',
         'tanggal_invoice',
         'jumlah',
-        'jatuh_tempo',
         'catatan',
         'file_path',
         'file_name',
@@ -34,7 +36,6 @@ class Invoice extends Model
     protected $casts = [
         'tanggal_invoice' => 'date',
         'jumlah' => 'decimal:2',
-        'jatuh_tempo' => 'date',
         'file_size' => 'integer',
         'file_processed_at' => 'datetime',
         'created_at' => 'datetime',
@@ -44,7 +45,7 @@ class Invoice extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['pengadaan_id', 'no_invoice', 'tanggal_invoice', 'jumlah', 'jatuh_tempo'])
+            ->logOnly(['pengadaan_id', 'no_invoice', 'tanggal_invoice', 'jumlah'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('invoice');
@@ -135,5 +136,47 @@ class Invoice extends Model
         }
 
         return StatusPembayaranPengadaan::Sebagian;
+    }
+
+    /**
+     * Umur invoice dalam hari sejak tanggal terbit.
+     */
+    public function getUmurHariAttribute(): int
+    {
+        return $this->tanggal_invoice
+            ? max(0, (int) $this->tanggal_invoice->startOfDay()->diffInDays(today()))
+            : 0;
+    }
+
+    /**
+     * Tanggal jatuh tempo derived: tanggal terbit + ambang overdue
+     * (`pengadaan.jatuh_tempo_overdue_days`, default 60 hari).
+     */
+    public function getJatuhTempoDerivedAttribute(): ?Carbon
+    {
+        return $this->tanggal_invoice?->copy()->addDays(ConfigHelper::getJatuhTempoOverdueDays());
+    }
+
+    /**
+     * Status jatuh tempo per-invoice dari umurnya — null bila alert
+     * nonaktif atau invoice sudah lunas (tidak dihitung lagi).
+     */
+    public function getJatuhTempoStatusAttribute(): ?JatuhTempoStatus
+    {
+        if (! ConfigHelper::isJatuhTempoWarningEnabled()
+            || ! $this->tanggal_invoice
+            || $this->status_pembayaran === StatusPembayaranPengadaan::Lunas) {
+            return null;
+        }
+
+        if ($this->umur_hari >= ConfigHelper::getJatuhTempoOverdueDays()) {
+            return JatuhTempoStatus::Lewat;
+        }
+
+        if ($this->umur_hari >= ConfigHelper::getJatuhTempoWarningDays()) {
+            return JatuhTempoStatus::Proses;
+        }
+
+        return JatuhTempoStatus::Aman;
     }
 }

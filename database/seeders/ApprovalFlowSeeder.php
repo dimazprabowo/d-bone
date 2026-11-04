@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\TipeBiaya;
 use App\Models\ApprovalFlow;
 use App\Models\BisnisArea;
 use App\Models\User;
@@ -12,29 +13,27 @@ class ApprovalFlowSeeder extends Seeder
     public function run(): void
     {
         $mk = User::where('email', 'manager.keuangan@app.com')->first();
-        $sm = User::where('email', 'sm.dukbis.penjualan@app.com')->first();
-        $kc = User::where('email', 'kepala.cabang@app.com')->first();
+        $smDukbis = User::where('email', 'sm.dukbis.penjualan@app.com')->first();
 
-        if (! $mk || ! $sm || ! $kc) {
+        if (! $mk || ! $smDukbis) {
             $this->command->warn('Approver account belum ada — lewati ApprovalFlowSeeder.');
 
             return;
         }
 
-        // Flow 1: di bawah Rp10 juta — sequential MK → SM (prioritas 1)
-        $flowKecil = ApprovalFlow::firstOrCreate(
-            ['name' => 'Pengadaan < Rp10 Juta', 'entity_type' => 'pengadaan'],
-            ['description' => 'Approval berjenjang untuk pengadaan dengan total biaya di bawah Rp10.000.000.', 'is_active' => true, 'priority' => 1]
+        // Flow 1: Fix Cost — satu tahap, Manager Keuangan ATAU SM Dukbis dan Penjualan (prioritas 1)
+        $flowFixCost = ApprovalFlow::firstOrCreate(
+            ['name' => 'Pengadaan Fix Cost', 'entity_type' => 'pengadaan'],
+            ['description' => 'Approval untuk pengadaan tipe Fix Cost: Manager Keuangan atau SM Dukbis dan Penjualan.', 'is_active' => true, 'priority' => 1]
         );
 
-        $this->syncFlow($flowKecil, [
-            ['field' => 'total_biaya', 'operator' => '<', 'value' => '10000000'],
+        $this->syncFlow($flowFixCost, [
+            ['field' => 'tipe_biaya', 'operator' => '=', 'value' => TipeBiaya::FixCost->value],
         ], [
-            ['name' => 'Approval Manager Keuangan', 'mode' => 'any', 'approvers' => [$mk->id]],
-            ['name' => 'Approval Senior Manager Dukungan Bisnis dan Penjualan', 'mode' => 'any', 'approvers' => [$sm->id]],
+            ['name' => 'Approval Manager Keuangan atau SM Dukbis dan Penjualan', 'mode' => 'any', 'approvers' => [$mk->id, $smDukbis->id]],
         ], 1);
 
-        // Flow per Bisnis Area: SM BA dulu → Keuangan & SM Dukbis bersamaan → Kepala Cabang
+        // Flow per Bisnis Area: RAB Project — SM BA dulu → Manager Keuangan atau SM Dukbis
         $smPerBa = [
             'TRL' => 'sm.trl@app.com',
             'ACY' => 'sm.acy@app.com',
@@ -52,34 +51,20 @@ class ApprovalFlowSeeder extends Seeder
             }
 
             $flowBa = ApprovalFlow::firstOrCreate(
-                ['name' => "Pengadaan {$baName} ≥ Rp10 Juta", 'entity_type' => 'pengadaan'],
-                ['description' => "Approval berjenjang untuk pengadaan {$baName}: SM {$baName} → Keuangan & SM Dukbis → Kepala Cabang.", 'is_active' => true, 'priority' => $priority]
+                ['name' => "Pengadaan RAB Project {$baName}", 'entity_type' => 'pengadaan'],
+                ['description' => "Approval untuk pengadaan RAB Project {$baName}: SM {$baName} lalu Manager Keuangan atau SM Dukbis dan Penjualan.", 'is_active' => true, 'priority' => $priority]
             );
 
             $this->syncFlow($flowBa, [
+                ['field' => 'tipe_biaya', 'operator' => '=', 'value' => TipeBiaya::RabProject->value],
                 ['field' => 'bisnis_area_id', 'operator' => '=', 'value' => (string) $ba->id],
-                ['field' => 'total_biaya', 'operator' => '>=', 'value' => '10000000'],
             ], [
                 ['name' => "Approval SM {$baName}", 'mode' => 'any', 'approvers' => [$smBa->id]],
-                ['name' => 'Approval Manager Keuangan & SM Dukbis dan Penjualan', 'mode' => 'all', 'approvers' => [$mk->id, $sm->id]],
-                ['name' => 'Approval Kepala Cabang', 'mode' => 'any', 'approvers' => [$kc->id]],
+                ['name' => 'Approval Manager Keuangan atau SM Dukbis dan Penjualan', 'mode' => 'any', 'approvers' => [$mk->id, $smDukbis->id]],
             ], $priority);
 
             $priority++;
         }
-
-        // Flow fallback: Rp10 juta ke atas tanpa BA khusus — MK + SM bersamaan → Kepala Cabang
-        $flowBesar = ApprovalFlow::firstOrCreate(
-            ['name' => 'Pengadaan ≥ Rp10 Juta', 'entity_type' => 'pengadaan'],
-            ['description' => 'Approval untuk pengadaan dengan total biaya Rp10.000.000 atau lebih tanpa alur khusus bisnis area.', 'is_active' => true, 'priority' => 9]
-        );
-
-        $this->syncFlow($flowBesar, [
-            ['field' => 'total_biaya', 'operator' => '>=', 'value' => '10000000'],
-        ], [
-            ['name' => 'Approval Manager Keuangan & SM Dukbis dan Penjualan', 'mode' => 'all', 'approvers' => [$mk->id, $sm->id]],
-            ['name' => 'Approval Kepala Cabang', 'mode' => 'any', 'approvers' => [$kc->id]],
-        ], 9);
     }
 
     protected function syncFlow(ApprovalFlow $flow, array $conditions, array $steps, int $priority): void

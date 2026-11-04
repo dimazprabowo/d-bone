@@ -163,8 +163,8 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Rentang Total Biaya</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <x-rupiah-input wireModel="totalMin" placeholder="Min" />
-                        <x-rupiah-input wireModel="totalMax" placeholder="Maks" />
+                        <x-rupiah-input wireModel="totalMin" placeholder="Min" class="mt-1" />
+                        <x-rupiah-input wireModel="totalMax" placeholder="Maks" class="mt-1" />
                     </div>
                 </div>
             </div>
@@ -203,7 +203,7 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bisnis Area</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cabang</th>
                         <x-sortable-th field="tanggal_pesanan_spk" :sort-field="$sortField" :sort-direction="$sortDirection">Tgl. Pesanan/SPK</x-sortable-th>
-                        <x-sortable-th field="tanggal_jatuh_tempo" :sort-field="$sortField" :sort-direction="$sortDirection">Jatuh Tempo</x-sortable-th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</th>
                         <x-sortable-th field="total_biaya" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Total Biaya</x-sortable-th>
                         <x-sortable-th field="saldo_belum_bayar" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Saldo Belum Bayar</x-sortable-th>
                         <x-sortable-th field="status_pembayaran" :sort-field="$sortField" :sort-direction="$sortDirection">Status Bayar</x-sortable-th>
@@ -223,11 +223,11 @@
                                 </button>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $pengadaan->no_pesanan_spk }}</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $pengadaan->no_pesanan_spk ?? '-' }}</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ $pengadaan->items_count }} item, {{ $pengadaan->evidences_count }} evidence</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->vendor->name }}</div>
+                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->vendor->name ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">{{ $pengadaan->bisnisArea->name ?? '-' }}</span>
@@ -236,10 +236,20 @@
                                 <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->cabang->name ?? 'Pusat' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->tanggal_pesanan_spk->format('d/m/Y') }}</div>
+                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->tanggal_pesanan_spk?->format('d/m/Y') ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm {{ $pengadaan->jatuh_tempo_alert?->textClass() ?? 'text-gray-900 dark:text-white' }}">{{ $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-' }}</div>
+                                @if($pengadaan->jatuh_tempo_status)
+                                    <button wire:click="openJatuhTempoDetail({{ $pengadaan->id }})"
+                                        wire:loading.attr="disabled" wire:target="openJatuhTempoDetail({{ $pengadaan->id }})"
+                                        wire:key="btn-jatuh-tempo-{{ $pengadaan->id }}"
+                                        class="px-2 py-1 text-xs font-medium rounded-full {{ $pengadaan->jatuh_tempo_status->badgeClass() }} cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-gray-400 dark:hover:ring-gray-500 transition-all disabled:opacity-50"
+                                        title="Lihat jatuh tempo invoice">
+                                        {{ $pengadaan->jatuh_tempo_status->label() }}
+                                    </button>
+                                @else
+                                    <span class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
                                 <div class="text-sm font-semibold text-gray-900 dark:text-white">Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</div>
@@ -411,6 +421,57 @@
         </div>
     @endif
 
+    {{-- Modal: Jatuh Tempo Invoice --}}
+    @if($showJatuhTempoModal && $jatuhTempoPengadaan)
+        <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" @click="$wire.closeJatuhTempoModal()"></div>
+                <div class="inline-block align-bottom w-full bg-white dark:bg-gray-800 rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Jatuh Tempo Invoice</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ $jatuhTempoPengadaan->no_pesanan_spk ?? '-' }} • Jatuh tempo = tanggal terbit + {{ \App\Helpers\ConfigHelper::getJatuhTempoOverdueDays() }} hari</p>
+
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">No. Invoice</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl. Terbit</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Umur</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</th>
+                                        <th class="px-3 py-2 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    @foreach($jatuhTempoPengadaan->invoices as $invoice)
+                                        <tr wire:key="jt-inv-{{ $invoice->id }}">
+                                            <td class="py-2 text-sm font-medium text-gray-900 dark:text-white">{{ $invoice->no_invoice }}</td>
+                                            <td class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">{{ $invoice->tanggal_invoice?->format('d/m/Y') ?? '-' }}</td>
+                                            <td class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">{{ $invoice->umur_hari }} hari</td>
+                                            <td class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">{{ $invoice->jatuh_tempo_derived?->format('d/m/Y') ?? '-' }}</td>
+                                            <td class="px-3 py-2 text-right">
+                                                @if($invoice->status_pembayaran === \App\Enums\StatusPembayaranPengadaan::Lunas)
+                                                    <span class="px-2 py-0.5 text-xs font-medium rounded-full {{ $invoice->status_pembayaran->badgeClass() }}">{{ $invoice->status_pembayaran->label() }}</span>
+                                                @elseif($invoice->jatuh_tempo_status)
+                                                    <span class="px-2 py-0.5 text-xs font-medium rounded-full {{ $invoice->jatuh_tempo_status->badgeClass() }}">{{ $invoice->jatuh_tempo_status->label() }}</span>
+                                                @else
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500">-</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 sm:px-6">
+                        <x-cancel-button wire:click="closeJatuhTempoModal" target="closeJatuhTempoModal" wire:key="btn-jt-cancel" variant="secondary" size="lg" class="w-full sm:w-auto" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Modal: Riwayat Status --}}
     @if($showHistoryModal && $historyPengadaan)
         <div class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar">
@@ -419,7 +480,7 @@
                 <div class="inline-block align-bottom w-full bg-white dark:bg-gray-800 rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Riwayat Status</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ $historyPengadaan->no_pesanan_spk }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ $historyPengadaan->no_pesanan_spk ?? '-' }}</p>
 
                         {{-- Pembuatan --}}
                         <div class="flex gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">

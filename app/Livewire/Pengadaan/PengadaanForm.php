@@ -51,8 +51,6 @@ class PengadaanForm extends Component
 
     public $tanggal_pesanan_spk;
 
-    public $tanggal_jatuh_tempo;
-
     public $catatan;
 
     // Item repeater
@@ -95,12 +93,11 @@ class PengadaanForm extends Component
                 'tipe_biaya' => $pengadaan->tipe_biaya?->value,
                 'nama_project' => $pengadaan->nama_project,
                 'no_wbs' => $pengadaan->no_wbs,
-                'klaster_id' => $pengadaan->vendor->klaster_id,
+                'klaster_id' => $pengadaan->vendor?->klaster_id,
                 'vendor_id' => $pengadaan->vendor_id,
                 'bisnis_area_id' => $pengadaan->bisnis_area_id,
                 'cabang_id' => $pengadaan->cabang_id,
                 'tanggal_pesanan_spk' => $pengadaan->tanggal_pesanan_spk?->format('Y-m-d'),
-                'tanggal_jatuh_tempo' => $pengadaan->tanggal_jatuh_tempo?->format('Y-m-d'),
                 'catatan' => $pengadaan->catatan,
             ]);
 
@@ -135,17 +132,16 @@ class PengadaanForm extends Component
     public function rules()
     {
         return [
-            'no_pesanan_spk' => ['required', 'string', 'max:50', Rule::unique('pengadaans', 'no_pesanan_spk')->whereNull('deleted_at')->ignore($this->editMode ? $this->pengadaanId : null)],
+            'no_pesanan_spk' => ['nullable', 'string', 'max:50', Rule::unique('pengadaans', 'no_pesanan_spk')->whereNull('deleted_at')->ignore($this->editMode ? $this->pengadaanId : null)],
             'nama_pemohon' => 'required|string|max:150',
             'tipe_biaya' => ['required', Rule::enum(TipeBiaya::class)],
             'nama_project' => ['nullable', 'string', 'max:150', Rule::requiredIf($this->tipe_biaya === TipeBiaya::RabProject->value)],
             'no_wbs' => ['nullable', 'string', 'max:50', Rule::requiredIf($this->tipe_biaya === TipeBiaya::RabProject->value)],
-            'klaster_id' => 'required|exists:klasters,id',
-            'vendor_id' => 'required|exists:vendors,id',
-            'bisnis_area_id' => 'required|exists:bisnis_areas,id',
+            'klaster_id' => 'nullable|exists:klasters,id',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'bisnis_area_id' => ['nullable', 'exists:bisnis_areas,id', Rule::requiredIf($this->tipe_biaya === TipeBiaya::RabProject->value)],
             'cabang_id' => 'nullable|exists:cabangs,id',
-            'tanggal_pesanan_spk' => 'required|date',
-            'tanggal_jatuh_tempo' => 'nullable|date|after_or_equal:tanggal_pesanan_spk',
+            'tanggal_pesanan_spk' => 'nullable|date',
             'catatan' => 'nullable|string|max:2000',
             'items' => ['required', 'array', 'min:1', function ($attribute, $value, $fail) {
                 $total = 0;
@@ -195,7 +191,6 @@ class PengadaanForm extends Component
             'bisnis_area_id' => 'bisnis area',
             'cabang_id' => 'cabang',
             'tanggal_pesanan_spk' => 'tanggal pesanan/SPK',
-            'tanggal_jatuh_tempo' => 'tanggal jatuh tempo',
             'catatan' => 'catatan',
             'items.*.nama_item' => 'nama item',
             'items.*.kategori_item_id' => 'kategori item',
@@ -210,6 +205,7 @@ class PengadaanForm extends Component
     public function updatedTipeBiaya($value): void
     {
         if ($value !== TipeBiaya::RabProject->value) {
+            $this->bisnis_area_id = null;
             $this->nama_project = null;
             $this->no_wbs = null;
         }
@@ -426,7 +422,7 @@ class PengadaanForm extends Component
 
         try {
             $data = [
-                'no_pesanan_spk' => strtoupper($this->no_pesanan_spk),
+                'no_pesanan_spk' => $this->no_pesanan_spk,
                 'nama_pemohon' => $this->nama_pemohon,
                 'tipe_biaya' => $this->tipe_biaya,
                 'nama_project' => $this->nama_project,
@@ -435,7 +431,6 @@ class PengadaanForm extends Component
                 'bisnis_area_id' => $this->bisnis_area_id,
                 'cabang_id' => $this->cabang_id,
                 'tanggal_pesanan_spk' => $this->tanggal_pesanan_spk,
-                'tanggal_jatuh_tempo' => $this->tanggal_jatuh_tempo,
                 'catatan' => $this->catatan,
             ];
 

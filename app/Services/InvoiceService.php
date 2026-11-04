@@ -8,7 +8,6 @@ use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Pengadaan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 /**
  * Mengelola Invoice & InvoicePayment sebagai sub-record dari Pengadaan
@@ -28,7 +27,6 @@ class InvoiceService
                 'no_invoice' => $data['no_invoice'],
                 'tanggal_invoice' => $data['tanggal_invoice'],
                 'jumlah' => $data['jumlah'],
-                'jatuh_tempo' => $data['jatuh_tempo'] ?? null,
                 'catatan' => $data['catatan'] ?? null,
                 'file_status' => $file ? 'processing' : null,
             ]);
@@ -38,7 +36,7 @@ class InvoiceService
                     $invoice->id,
                     $file['temp_path'],
                     $file['original_name'],
-                    Str::slug($pengadaan->no_pesanan_spk)
+                    $pengadaan->spk_slug
                 );
             }
 
@@ -52,7 +50,6 @@ class InvoiceService
             'no_invoice' => $data['no_invoice'],
             'tanggal_invoice' => $data['tanggal_invoice'],
             'jumlah' => $data['jumlah'],
-            'jatuh_tempo' => $data['jatuh_tempo'] ?? null,
             'catatan' => $data['catatan'] ?? null,
         ]);
 
@@ -106,7 +103,7 @@ class InvoiceService
                     $payment->id,
                     $file['temp_path'],
                     $file['original_name'],
-                    Str::slug($invoice->pengadaan->no_pesanan_spk)
+                    $invoice->pengadaan->spk_slug
                 );
             }
 

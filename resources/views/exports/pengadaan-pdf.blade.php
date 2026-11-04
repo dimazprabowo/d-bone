@@ -23,16 +23,16 @@
         @foreach($pengadaans as $i => $pengadaan)
         <tr>
             <td>{{ $i + 1 }}</td>
-            <td>{{ $pengadaan->no_pesanan_spk }}</td>
+            <td>{{ $pengadaan->no_pesanan_spk ?? '-' }}</td>
             <td>{{ $pengadaan->nama_pemohon }}</td>
             <td>{{ $pengadaan->tipe_biaya->label() }}</td>
             <td>{{ $pengadaan->nama_project ?? '-' }}</td>
             <td>{{ $pengadaan->no_wbs ?? '-' }}</td>
-            <td>{{ $pengadaan->vendor->name }}</td>
+            <td>{{ $pengadaan->vendor->name ?? '-' }}</td>
             <td>{{ $pengadaan->cabang->name ?? 'Pusat' }}</td>
             <td>{{ $pengadaan->bisnisArea->name ?? '-' }}</td>
-            <td>{{ $pengadaan->tanggal_pesanan_spk->format('d/m/Y') }}</td>
-            <td>{{ $pengadaan->tanggal_jatuh_tempo?->format('d/m/Y') ?? '-' }}</td>
+            <td>{{ $pengadaan->tanggal_pesanan_spk?->format('d/m/Y') ?? '-' }}</td>
+            <td>{{ $pengadaan->jatuh_tempo_status?->label() ?? '-' }}</td>
             <td>{{ $pengadaan->items_count }}</td>
             <td>Rp {{ number_format($pengadaan->total_biaya, 0, ',', '.') }}</td>
             <td>Rp {{ number_format($pengadaan->invoices->sum(fn ($inv) => $inv->total_dibayar), 0, ',', '.') }}</td>

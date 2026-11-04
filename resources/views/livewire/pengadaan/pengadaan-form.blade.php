@@ -12,11 +12,6 @@
                         <x-input-error :messages="$errors->get('cabang_id')" class="mt-2" />
                     </div>
                     <div>
-                        <x-input-label for="bisnis_area_id" value="Bisnis Area" :required="true" />
-                        <x-searchable-select wire:model="bisnis_area_id" :options="$this->bisnisAreaOptions" placeholder="Pilih bisnis area" searchPlaceholder="Cari bisnis area..." />
-                        <x-input-error :messages="$errors->get('bisnis_area_id')" class="mt-2" />
-                    </div>
-                    <div>
                         <x-input-label for="nama_pemohon" value="Nama Pemohon" :required="true" />
                         <x-text-input wire:model="nama_pemohon" id="nama_pemohon" type="text" class="mt-1 block w-full" placeholder="Mis. Budi Santoso" />
                         <x-input-error :messages="$errors->get('nama_pemohon')" class="mt-2" />
@@ -27,6 +22,11 @@
                         <x-input-error :messages="$errors->get('tipe_biaya')" class="mt-2" />
                     </div>
                     @if($tipe_biaya === \App\Enums\TipeBiaya::RabProject->value)
+                        <div>
+                            <x-input-label for="bisnis_area_id" value="Bisnis Area" :required="true" />
+                            <x-searchable-select wire:model="bisnis_area_id" :options="$this->bisnisAreaOptions" placeholder="Pilih bisnis area" searchPlaceholder="Cari bisnis area..." />
+                            <x-input-error :messages="$errors->get('bisnis_area_id')" class="mt-2" />
+                        </div>
                         <div>
                             <x-input-label for="nama_project" value="Nama Project" :required="true" />
                             <x-text-input wire:model="nama_project" id="nama_project" type="text" class="mt-1 block w-full" placeholder="Mis. Project Kalibrasi Tahap 1" />
@@ -44,12 +44,12 @@
                 <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <x-input-label for="klaster_id" value="Klaster Vendor" :required="true" />
+                            <x-input-label for="klaster_id" value="Klaster Vendor" />
                             <x-searchable-select wire:model.live="klaster_id" :options="$this->klasterOptions" placeholder="Pilih klaster" searchPlaceholder="Cari klaster..." />
                             <x-input-error :messages="$errors->get('klaster_id')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="vendor_id" value="Vendor" :required="true" />
+                            <x-input-label for="vendor_id" value="Vendor" />
                             <x-searchable-select wire:model.live="vendor_id" :options="$this->vendorOptions" placeholder="{{ $klaster_id ? 'Pilih vendor' : 'Pilih klaster terlebih dahulu' }}" searchPlaceholder="Cari vendor..." wire:key="vendor-select-{{ $klaster_id ?? 'none' }}" />
                             <x-input-error :messages="$errors->get('vendor_id')" class="mt-2" />
                         </div>
@@ -60,19 +60,14 @@
                 <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <x-input-label for="no_pesanan_spk" value="No. Pesanan/SPK" :required="true" />
+                            <x-input-label for="no_pesanan_spk" value="No. Pesanan/SPK" />
                             <x-text-input wire:model="no_pesanan_spk" id="no_pesanan_spk" type="text" class="mt-1 block w-full" placeholder="Mis. SPK-2026-001" />
                             <x-input-error :messages="$errors->get('no_pesanan_spk')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="tanggal_pesanan_spk" value="Tanggal Pesanan/SPK" :required="true" />
+                            <x-input-label for="tanggal_pesanan_spk" value="Tanggal Pesanan/SPK" />
                             <x-date-picker wire:model="tanggal_pesanan_spk" id="tanggal_pesanan_spk" />
                             <x-input-error :messages="$errors->get('tanggal_pesanan_spk')" class="mt-2" />
-                        </div>
-                        <div>
-                            <x-input-label for="tanggal_jatuh_tempo" value="Tanggal Jatuh Tempo" />
-                            <x-date-picker wire:model="tanggal_jatuh_tempo" id="tanggal_jatuh_tempo" />
-                            <x-input-error :messages="$errors->get('tanggal_jatuh_tempo')" class="mt-2" />
                         </div>
                     </div>
                 </div>

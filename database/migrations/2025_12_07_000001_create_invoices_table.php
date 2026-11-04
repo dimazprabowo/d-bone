@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('no_invoice');
             $table->date('tanggal_invoice');
             $table->decimal('jumlah', 15, 2);
-            $table->date('jatuh_tempo')->nullable();
             $table->text('catatan')->nullable();
 
             // Dokumen invoice (async via worker)
@@ -31,7 +30,6 @@ return new class extends Migration
 
             $table->index('pengadaan_id');
             $table->index('tanggal_invoice');
-            $table->index('jatuh_tempo');
         });
     }
 

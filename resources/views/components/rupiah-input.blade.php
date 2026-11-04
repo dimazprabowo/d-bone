@@ -37,7 +37,7 @@
         clearTimeout(this._commitTimer);
         this._commitTimer = setTimeout(() => $wire.$commit(), 350);
     }
-}" x-init="syncFromLivewire()" x-effect="syncFromLivewire()">
+}" x-init="syncFromLivewire()" x-effect="syncFromLivewire()" {{ $attributes->only('class') }}>
     @if($label)
         <x-input-label :for="$inputId" :value="$label" :required="$required" />
     @endif

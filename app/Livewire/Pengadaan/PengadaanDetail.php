@@ -11,7 +11,6 @@ use App\Services\InvoiceService;
 use App\Services\PengadaanService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -32,8 +31,6 @@ class PengadaanDetail extends Component
     public $inv_tanggal_invoice;
 
     public $inv_jumlah;
-
-    public $inv_jatuh_tempo;
 
     public $inv_catatan;
 
@@ -209,7 +206,6 @@ class PengadaanDetail extends Component
         $this->inv_no_invoice = $invoice->no_invoice;
         $this->inv_tanggal_invoice = $invoice->tanggal_invoice?->format('Y-m-d');
         $this->inv_jumlah = number_format((float) $invoice->jumlah, 0, '.', '');
-        $this->inv_jatuh_tempo = $invoice->jatuh_tempo?->format('Y-m-d');
         $this->inv_catatan = $invoice->catatan;
         $this->inv_file = null;
         $this->showInvoiceModal = true;
@@ -232,7 +228,6 @@ class PengadaanDetail extends Component
         $this->inv_no_invoice = null;
         $this->inv_tanggal_invoice = null;
         $this->inv_jumlah = null;
-        $this->inv_jatuh_tempo = null;
         $this->inv_catatan = null;
         $this->inv_file = null;
         $this->resetErrorBag();
@@ -244,7 +239,6 @@ class PengadaanDetail extends Component
             'inv_no_invoice' => 'required|string|max:255',
             'inv_tanggal_invoice' => 'required|date',
             'inv_jumlah' => 'required|numeric|min:0|max:99999999999999',
-            'inv_jatuh_tempo' => 'nullable|date|after_or_equal:inv_tanggal_invoice',
             'inv_catatan' => 'nullable|string|max:2000',
             'inv_file' => 'nullable|'.file_upload_validation_rule('invoice'),
         ];
@@ -260,7 +254,6 @@ class PengadaanDetail extends Component
             'inv_no_invoice' => 'no. invoice',
             'inv_tanggal_invoice' => 'tanggal invoice',
             'inv_jumlah' => 'jumlah',
-            'inv_jatuh_tempo' => 'jatuh tempo',
             'inv_catatan' => 'catatan',
             'inv_file' => 'file invoice',
         ]);
@@ -270,7 +263,6 @@ class PengadaanDetail extends Component
                 'no_invoice' => $this->inv_no_invoice,
                 'tanggal_invoice' => $this->inv_tanggal_invoice,
                 'jumlah' => (float) $this->inv_jumlah,
-                'jatuh_tempo' => $this->inv_jatuh_tempo,
                 'catatan' => $this->inv_catatan,
             ];
 
@@ -285,7 +277,7 @@ class PengadaanDetail extends Component
                 $service->updateInvoice($invoice, $data);
 
                 if ($filePayload) {
-                    $service->replaceInvoiceFile($invoice, $filePayload, Str::slug($this->pengadaan->no_pesanan_spk));
+                    $service->replaceInvoiceFile($invoice, $filePayload, $this->pengadaan->spk_slug);
                 }
 
                 $this->notifySuccess('Invoice berhasil diupdate!');
@@ -446,7 +438,7 @@ class PengadaanDetail extends Component
                 $service->updatePayment($payment, $data);
 
                 if ($filePayload) {
-                    $service->replacePaymentFile($payment, $filePayload, Str::slug($this->pengadaan->no_pesanan_spk));
+                    $service->replacePaymentFile($payment, $filePayload, $this->pengadaan->spk_slug);
                 }
 
                 $this->notifySuccess('Pembayaran berhasil diupdate!');

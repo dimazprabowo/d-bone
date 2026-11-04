@@ -14,7 +14,6 @@ use App\Models\User;
 use App\Traits\HasDynamicLike;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class PengadaanService
 {
@@ -65,7 +64,7 @@ class PengadaanService
             return $query->orderByRaw("$expr $direction")->orderByDesc('id')->paginate($perPage);
         }
 
-        $sortable = ['no_pesanan_spk', 'tanggal_pesanan_spk', 'tanggal_jatuh_tempo', 'total_biaya', 'status_approval'];
+        $sortable = ['no_pesanan_spk', 'tanggal_pesanan_spk', 'total_biaya', 'status_approval'];
         $field = in_array($sortField, $sortable, true) ? $sortField : 'tanggal_pesanan_spk';
 
         return $query->orderBy($field, $direction)
@@ -181,14 +180,20 @@ class PengadaanService
         }
 
         if (! empty($filters['jatuh_tempo']) && ConfigHelper::isJatuhTempoWarningEnabled()) {
-            $warnDays = ConfigHelper::getJatuhTempoWarningDays();
-            $dueSoon = today()->addDays($warnDays);
-            $query->where(function ($q) use ($filters, $dueSoon) {
+            $warnDate = today()->subDays(ConfigHelper::getJatuhTempoWarningDays());
+            $overdueDate = today()->subDays(ConfigHelper::getJatuhTempoOverdueDays());
+            $unpaid = fn ($i) => $i->whereRaw('(SELECT COALESCE(SUM(ip.jumlah_bayar),0) FROM invoice_payments ip WHERE ip.invoice_id = invoices.id) < invoices.jumlah');
+
+            $query->where(function ($q) use ($filters, $warnDate, $overdueDate, $unpaid) {
                 foreach ((array) $filters['jatuh_tempo'] as $status) {
                     match ($status) {
-                        'lewat' => $q->orWhere(fn ($qq) => $qq->whereNotNull('tanggal_jatuh_tempo')->where('tanggal_jatuh_tempo', '<', today())),
-                        'proses' => $q->orWhere(fn ($qq) => $qq->whereNotNull('tanggal_jatuh_tempo')->whereBetween('tanggal_jatuh_tempo', [today(), $dueSoon])),
-                        'aman' => $q->orWhere(fn ($qq) => $qq->whereNull('tanggal_jatuh_tempo')->orWhere('tanggal_jatuh_tempo', '>', $dueSoon)),
+                        'lewat' => $q->orWhereHas('invoices', fn ($i) => $unpaid($i)->where('tanggal_invoice', '<=', $overdueDate)),
+                        'proses' => $q->orWhere(fn ($qq) => $qq
+                            ->whereHas('invoices', fn ($i) => $unpaid($i)->where('tanggal_invoice', '<=', $warnDate)->where('tanggal_invoice', '>', $overdueDate))
+                            ->whereDoesntHave('invoices', fn ($i) => $unpaid($i)->where('tanggal_invoice', '<=', $overdueDate))),
+                        'aman' => $q->orWhere(fn ($qq) => $qq
+                            ->whereHas('invoices', fn ($i) => $unpaid($i))
+                            ->whereDoesntHave('invoices', fn ($i) => $unpaid($i)->where('tanggal_invoice', '<=', $warnDate))),
                         default => null,
                     };
                 }
@@ -221,8 +226,11 @@ class PengadaanService
     public function create(array $data, array $items, array $evidences = []): Pengadaan
     {
         return DB::transaction(function () use ($data, $items, $evidences) {
-            $data['no_pesanan_spk'] = strtoupper($data['no_pesanan_spk']);
+            if (isset($data['no_pesanan_spk'])) {
+                $data['no_pesanan_spk'] = strtoupper($data['no_pesanan_spk']);
+            }
             $isRab = ($data['tipe_biaya'] ?? null) === TipeBiaya::RabProject->value;
+            $data['bisnis_area_id'] = $isRab ? ($data['bisnis_area_id'] ?? null) : null;
             $data['nama_project'] = $isRab ? ($data['nama_project'] ?? null) : null;
             $data['no_wbs'] = $isRab ? strtoupper($data['no_wbs'] ?? '') : null;
             $data['status_approval'] = PengadaanApprovalStatus::Pending->value;
@@ -259,6 +267,7 @@ class PengadaanService
 
             if (isset($data['tipe_biaya'])) {
                 $isRab = $data['tipe_biaya'] === TipeBiaya::RabProject->value;
+                $data['bisnis_area_id'] = $isRab ? ($data['bisnis_area_id'] ?? null) : null;
                 $data['nama_project'] = $isRab ? ($data['nama_project'] ?? null) : null;
                 $data['no_wbs'] = $isRab ? strtoupper($data['no_wbs'] ?? '') : null;
             }
@@ -379,7 +388,7 @@ class PengadaanService
             $record->id,
             $evidence['temp_path'],
             $evidence['original_name'],
-            Str::slug($pengadaan->no_pesanan_spk)
+            $pengadaan->spk_slug
         );
 
         return $record;

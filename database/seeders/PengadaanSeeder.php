@@ -42,8 +42,11 @@ class PengadaanSeeder extends Seeder
         $kategoriMap = KategoriItem::pluck('id', 'name');
         $jakarta = Cabang::where('code', 'JKT')->first();
 
-        // 12 skenario pengadaan yang mencakup semua state:
-        // approval (pending/approved/rejected) x invoice (none/partial/full) x payment (none/partial/lunas/pending/rejected)
+        // 20 skenario pengadaan menyerupai data asli: kombinasi tipe biaya
+        // (Fix Cost / RAB Project tiap Bisnis Area), approval (pending/approved/rejected),
+        // invoice & payment (none/partial/multi/lunas), umur invoice (Aman/Proses/Lewat),
+        // pengadaan pusat tanpa cabang, record dengan field opsional kosong,
+        // serta data historis tahun sebelumnya.
         $scenarios = [
             // 1. Pending - menunggu approval, ada evidence completed
             [
@@ -68,6 +71,7 @@ class PengadaanSeeder extends Seeder
             // 2. Approved - belum ditagih (no invoice)
             [
                 'no' => 'SPK-2025-002',
+                'pemohon' => 'Dian Prasetyo',
                 'vendor_code' => 'VDR-002',
                 'bisnis_area' => 'ACY',
                 'cabang' => $jakarta,
@@ -106,7 +110,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-MEI-2025-001',
                         'tanggal' => now()->subDays(35),
                         'jumlah' => 15000000,
-                        'jatuh_tempo' => now()->subDays(5),
                         'catatan' => 'Invoice tahap 1 (DP 50%).',
                         'payments' => [
                             [
@@ -122,6 +125,7 @@ class PengadaanSeeder extends Seeder
             // 4. Approved + invoice full + payment approved (LUNAS)
             [
                 'no' => 'SPK-2025-004',
+                'pemohon' => 'Sari Wulandari',
                 'vendor_code' => 'VDR-004',
                 'bisnis_area' => 'TKDN & Pemerintahan',
                 'cabang' => $jakarta,
@@ -139,7 +143,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-FLK-2025-004',
                         'tanggal' => now()->subDays(55),
                         'jumlah' => 12800000,
-                        'jatuh_tempo' => now()->subDays(25),
                         'catatan' => 'Invoice full.',
                         'payments' => [
                             [
@@ -152,9 +155,10 @@ class PengadaanSeeder extends Seeder
                 ],
                 'catatan' => 'Pengadaan thermohygrometer untuk 4 cabang.',
             ],
-            // 5. Approved + invoice full + payment pending (belum dibayar, butuh approval)
+            // 5. Approved + invoice full + payment lunas (satu pembayaran penuh)
             [
                 'no' => 'SPK-2025-005',
+                'pemohon' => 'Nur Hidayati',
                 'vendor_code' => 'VDR-005',
                 'bisnis_area' => 'TKDN & Pemerintahan',
                 'cabang' => $jakarta,
@@ -172,7 +176,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-MTR-2025-005',
                         'tanggal' => now()->subDays(15),
                         'jumlah' => 16700000,
-                        'jatuh_tempo' => now()->addDays(15),
                         'catatan' => 'Invoice full.',
                         'payments' => [
                             [
@@ -188,6 +191,7 @@ class PengadaanSeeder extends Seeder
             // 6. Approved + invoice full + payment partial (dibayar sebagian, sisanya belum)
             [
                 'no' => 'SPK-2025-006',
+                'pemohon' => 'Bagus Pramudya',
                 'vendor_code' => 'VDR-006',
                 'bisnis_area' => 'TRL',
                 'cabang' => $jakarta,
@@ -204,7 +208,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-TST-2025-006',
                         'tanggal' => now()->subDays(45),
                         'jumlah' => 19000000,
-                        'jatuh_tempo' => now()->subDays(15),
                         'catatan' => 'Invoice full.',
                         'payments' => [
                             [
@@ -220,11 +223,13 @@ class PengadaanSeeder extends Seeder
             // 7. Rejected (dengan rejection_reason)
             [
                 'no' => 'SPK-2025-007',
+                'pemohon' => 'Fitri Anggraini',
                 'vendor_code' => 'VDR-007',
                 'bisnis_area' => 'ACY',
                 'cabang' => $jakarta,
                 'tanggal' => now()->subDays(10),
                 'status' => PengadaanApprovalStatus::Rejected,
+                'rejection_reason' => 'Harga satuan di atas estimasi pasar — lakukan negosiasi ulang dengan vendor atau cari alternatif merek lain.',
                 'items' => [
                     ['nama_item' => 'Pressure Gauge WIKA 232.50 (Replacement)', 'kategori' => 'Alat Ukur Tekanan', 'qty' => 1, 'satuan' => 'unit', 'harga' => 1800000],
                 ],
@@ -235,6 +240,7 @@ class PengadaanSeeder extends Seeder
             // 8. Approved + invoice overdue (jatuh tempo lewat, belum dibayar sama sekali)
             [
                 'no' => 'SPK-2025-008',
+                'pemohon' => 'Yusuf Maulana',
                 'vendor_code' => 'VDR-008',
                 'bisnis_area' => 'ENI',
                 'cabang' => $jakarta,
@@ -252,7 +258,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-SPI-2025-008',
                         'tanggal' => now()->subDays(70),
                         'jumlah' => 28000000,
-                        'jatuh_tempo' => now()->subDays(40),
                         'catatan' => 'Invoice full, sudah lewat jatuh tempo.',
                         'payments' => [],
                     ],
@@ -262,6 +267,7 @@ class PengadaanSeeder extends Seeder
             // 9. Approved + invoice + payment rejected (perlu re-submit bukti transfer)
             [
                 'no' => 'SPK-2025-009',
+                'pemohon' => 'Ratna Sari',
                 'vendor_code' => 'VDR-009',
                 'bisnis_area' => 'TKDN & Pemerintahan',
                 'cabang' => $jakarta,
@@ -278,7 +284,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-MLM-2025-009',
                         'tanggal' => now()->subDays(20),
                         'jumlah' => 15000000,
-                        'jatuh_tempo' => now()->addDays(10),
                         'catatan' => 'Invoice full.',
                         'payments' => [
                             [
@@ -319,7 +324,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-SAT-2025-010-A',
                         'tanggal' => now()->subDays(85),
                         'jumlah' => 10000000,
-                        'jatuh_tempo' => now()->subDays(55),
                         'catatan' => 'Invoice tahap 1 (DP).',
                         'payments' => [
                             [
@@ -333,7 +337,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-SAT-2025-010-B',
                         'tanggal' => now()->subDays(50),
                         'jumlah' => 10700000,
-                        'jatuh_tempo' => now()->subDays(20),
                         'catatan' => 'Invoice tahap 2 (pelunasan).',
                         'payments' => [
                             [
@@ -349,6 +352,7 @@ class PengadaanSeeder extends Seeder
             // 11. Approved + invoice + multi-payment (lunas, 2x cicil)
             [
                 'no' => 'SPK-2025-011',
+                'pemohon' => 'Eko Prasetyo',
                 'vendor_code' => 'VDR-003',
                 'bisnis_area' => 'ENI',
                 'cabang' => $jakarta,
@@ -365,7 +369,6 @@ class PengadaanSeeder extends Seeder
                         'no' => 'INV-MEI-2025-011',
                         'tanggal' => now()->subDays(40),
                         'jumlah' => 12000000,
-                        'jatuh_tempo' => now()->subDays(10),
                         'catatan' => 'Invoice full.',
                         'payments' => [
                             [
@@ -391,6 +394,7 @@ class PengadaanSeeder extends Seeder
             // 12. Pending dengan evidence processing (file_status=processing)
             [
                 'no' => 'SPK-2025-012',
+                'pemohon' => 'Dimas Aryo',
                 'vendor_code' => 'VDR-006',
                 'bisnis_area' => 'TRL',
                 'cabang' => $jakarta,
@@ -405,12 +409,228 @@ class PengadaanSeeder extends Seeder
                 'invoices' => [],
                 'catatan' => 'Pengadaan anemometer, evidence masih diproses.',
             ],
+            // 13. Approved + invoice muda belum dibayar (status jatuh tempo Aman)
+            [
+                'no' => 'SPK-2025-013',
+                'pemohon' => 'Dewi Lestari',
+                'vendor_code' => 'VDR-006',
+                'cabang' => $jakarta,
+                'tanggal' => now()->subDays(18),
+                'status' => PengadaanApprovalStatus::Approved,
+                'items' => [
+                    ['nama_item' => 'Data Logger Suhu Testo 175 T1', 'kategori' => 'Alat Ukur Lingkungan', 'qty' => 4, 'satuan' => 'unit', 'harga' => 2100000],
+                    ['nama_item' => 'Sound Level Meter Testo 816-1', 'kategori' => 'Alat Ukur Lingkungan', 'qty' => 1, 'satuan' => 'unit', 'harga' => 5400000],
+                ],
+                'evidences' => [
+                    ['name' => 'Penawaran PT Testo Instruments.pdf'],
+                ],
+                'invoices' => [
+                    [
+                        'no' => 'INV-TST-2025-013',
+                        'tanggal' => now()->subDays(12),
+                        'jumlah' => 13800000,
+                        'catatan' => 'Invoice full, menunggu jadwal pembayaran.',
+                        'payments' => [],
+                    ],
+                ],
+                'catatan' => 'Pengadaan data logger dan sound level meter untuk ruang uji lingkungan.',
+            ],
+            // 14. RAB ACY pending — step 1 (SM ACY) selesai, menunggu MK/SM Dukbis
+            [
+                'no' => 'SPK-2025-014',
+                'pemohon' => 'Rina Kartika',
+                'tipe_biaya' => TipeBiaya::RabProject,
+                'nama_project' => 'Project Renovasi Ruang Kelas BKI Academy',
+                'no_wbs' => 'WBS-ACY-2025-014',
+                'vendor_code' => 'VDR-005',
+                'bisnis_area' => 'ACY',
+                'cabang' => $jakarta,
+                'tanggal' => now()->subDays(8),
+                'status' => PengadaanApprovalStatus::Pending,
+                'items' => [
+                    ['nama_item' => 'Mesin Bor Duduk Bosch GBD 350', 'kategori' => 'Power Tools', 'qty' => 1, 'satuan' => 'unit', 'harga' => 6750000],
+                    ['nama_item' => 'Lemari Perkakas Besi 3 Pintu', 'kategori' => 'Storage', 'qty' => 2, 'satuan' => 'unit', 'harga' => 4800000],
+                ],
+                'evidences' => [
+                    ['name' => 'Penawaran CV Mitroteknik.pdf'],
+                    ['name' => 'RAB Renovasi Ruang Kelas.xlsx'],
+                ],
+                'invoices' => [],
+                'catatan' => 'Pengadaan peralatan renovasi ruang kelas Academy lantai 2.',
+            ],
+            // 15. RAB TKDN & Pemerintahan approved + lunas
+            [
+                'no' => 'SPK-2025-015',
+                'pemohon' => 'Ferry Kurniawan',
+                'tipe_biaya' => TipeBiaya::RabProject,
+                'nama_project' => 'Project Verifikasi TKDN Batch II',
+                'no_wbs' => 'WBS-TKD-2025-015',
+                'vendor_code' => 'VDR-009',
+                'bisnis_area' => 'TKDN & Pemerintahan',
+                'cabang' => $jakarta,
+                'tanggal' => now()->subDays(95),
+                'status' => PengadaanApprovalStatus::Approved,
+                'items' => [
+                    ['nama_item' => 'Hand Pallet Truck 3 Ton', 'kategori' => 'Material Handling', 'qty' => 2, 'satuan' => 'unit', 'harga' => 5800000],
+                ],
+                'evidences' => [
+                    ['name' => 'PO Hand Pallet.pdf'],
+                ],
+                'invoices' => [
+                    [
+                        'no' => 'INV-MLM-2025-015',
+                        'tanggal' => now()->subDays(90),
+                        'jumlah' => 11600000,
+                        'catatan' => 'Invoice full.',
+                        'payments' => [
+                            [
+                                'tanggal_bayar' => now()->subDays(55),
+                                'jumlah_bayar' => 11600000,
+                                'metode' => 'Virtual Account BNI',
+                            ],
+                        ],
+                    ],
+                ],
+                'catatan' => 'Pengadaan hand pallet untuk kegiatan verifikasi TKDN.',
+            ],
+            // 16. Pengadaan pusat tanpa vendor/nomor SPK — field opsional kosong (Pending)
+            [
+                'no' => null,
+                'pemohon' => 'Agus Prasetyo',
+                'vendor_code' => null,
+                'cabang' => null,
+                'tanggal' => null,
+                'submitted_at' => now()->subDays(4),
+                'status' => PengadaanApprovalStatus::Pending,
+                'items' => [
+                    ['nama_item' => 'Jasa Konsultasi Layout Laboratorium', 'kategori' => null, 'qty' => 1, 'satuan' => 'jasa', 'harga' => 18000000],
+                ],
+                'evidences' => [],
+                'invoices' => [],
+                'catatan' => 'Pengajuan awal — vendor dan nomor pesanan menyusul setelah approval.',
+            ],
+            // 17. Rejected — pengadaan pusat (tanpa cabang), alasan penolakan eksplisit
+            [
+                'no' => 'SPK-2025-017',
+                'pemohon' => 'Hendra Gunawan',
+                'vendor_code' => 'VDR-007',
+                'cabang' => null,
+                'tanggal' => now()->subDays(14),
+                'status' => PengadaanApprovalStatus::Rejected,
+                'rejection_reason' => 'Total biaya melebihi anggaran yang disetujui untuk periode ini. Ajukan kembali setelah revisi anggaran.',
+                'items' => [
+                    ['nama_item' => 'Pressure Transmitter WIKA S-20', 'kategori' => 'Alat Ukur Tekanan', 'qty' => 6, 'satuan' => 'unit', 'harga' => 12500000],
+                ],
+                'evidences' => [
+                    ['name' => 'Penawaran PT WIKA Instrument.pdf'],
+                ],
+                'invoices' => [],
+                'catatan' => 'Pengadaan pressure transmitter untuk upgrade stasiun uji.',
+            ],
+            // 18. Data historis 2024 — Fix Cost lunas
+            [
+                'no' => 'SPK-2024-101',
+                'pemohon' => 'Maya Sari',
+                'vendor_code' => 'VDR-004',
+                'cabang' => $jakarta,
+                'tanggal' => now()->subDays(400),
+                'status' => PengadaanApprovalStatus::Approved,
+                'items' => [
+                    ['nama_item' => 'Jasa Kalibrasi Thermohygrometer (Per Titik)', 'kategori' => 'Alat Ukur Lingkungan', 'qty' => 12, 'satuan' => 'jasa', 'harga' => 750000],
+                ],
+                'evidences' => [
+                    ['name' => 'PO Kalibrasi 2024.pdf'],
+                ],
+                'invoices' => [
+                    [
+                        'no' => 'INV-FLK-2024-101',
+                        'tanggal' => now()->subDays(390),
+                        'jumlah' => 9000000,
+                        'catatan' => 'Invoice full.',
+                        'payments' => [
+                            [
+                                'tanggal_bayar' => now()->subDays(370),
+                                'jumlah_bayar' => 9000000,
+                                'metode' => 'Transfer Bank Mandiri',
+                            ],
+                        ],
+                    ],
+                ],
+                'catatan' => 'Kalibrasi berkala thermohygrometer tahun 2024.',
+            ],
+            // 19. Data historis 2024 — RAB ENI lunas (multi-invoice)
+            [
+                'no' => 'SPK-2024-102',
+                'pemohon' => 'Rudi Hartono',
+                'tipe_biaya' => TipeBiaya::RabProject,
+                'nama_project' => 'Project Retrofit Panel Kontrol Kapal Survei',
+                'no_wbs' => 'WBS-ENI-2024-102',
+                'vendor_code' => 'VDR-003',
+                'bisnis_area' => 'ENI',
+                'cabang' => $jakarta,
+                'tanggal' => now()->subDays(365),
+                'status' => PengadaanApprovalStatus::Approved,
+                'items' => [
+                    ['nama_item' => 'Echosounder Garmin Striker Vivid', 'kategori' => 'Marine Electronics', 'qty' => 2, 'satuan' => 'unit', 'harga' => 9800000],
+                    ['nama_item' => 'Signal Generator Rigol DG1022Z', 'kategori' => 'Alat Ukur Elektronik', 'qty' => 1, 'satuan' => 'unit', 'harga' => 7200000],
+                ],
+                'evidences' => [
+                    ['name' => 'Penawaran PT Marine Equipment.pdf'],
+                    ['name' => 'BAST Retrofit Panel.pdf'],
+                ],
+                'invoices' => [
+                    [
+                        'no' => 'INV-MEI-2024-102-A',
+                        'tanggal' => now()->subDays(360),
+                        'jumlah' => 13400000,
+                        'catatan' => 'Invoice tahap 1 (DP 50%).',
+                        'payments' => [
+                            [
+                                'tanggal_bayar' => now()->subDays(340),
+                                'jumlah_bayar' => 13400000,
+                                'metode' => 'Transfer Bank BCA',
+                            ],
+                        ],
+                    ],
+                    [
+                        'no' => 'INV-MEI-2024-102-B',
+                        'tanggal' => now()->subDays(320),
+                        'jumlah' => 13400000,
+                        'catatan' => 'Invoice tahap 2 (pelunasan).',
+                        'payments' => [
+                            [
+                                'tanggal_bayar' => now()->subDays(300),
+                                'jumlah_bayar' => 13400000,
+                                'metode' => 'Transfer Bank BCA',
+                            ],
+                        ],
+                    ],
+                ],
+                'catatan' => 'Retrofit panel kontrol kapal survei — selesai dan lunas.',
+            ],
+            // 20. Approved pengadaan pusat — belum ada invoice
+            [
+                'no' => 'SPK-2025-016',
+                'pemohon' => 'Lina Marlina',
+                'vendor_code' => 'VDR-009',
+                'cabang' => null,
+                'tanggal' => now()->subDays(28),
+                'status' => PengadaanApprovalStatus::Approved,
+                'items' => [
+                    ['nama_item' => 'Trolley Barang Heavy Duty 500kg', 'kategori' => 'Material Handling', 'qty' => 3, 'satuan' => 'unit', 'harga' => 3900000],
+                ],
+                'evidences' => [
+                    ['name' => 'Quotation PT Mitra Logistik.pdf'],
+                ],
+                'invoices' => [],
+                'catatan' => 'Pengadaan trolley untuk kantor pusat.',
+            ],
         ];
 
         DB::transaction(function () use ($scenarios, $vendors, $bisnisAreas, $satuanMap, $kategoriMap, $admin, $fileStorage, $disk) {
             foreach ($scenarios as $scenario) {
-                $vendor = $vendors->get($scenario['vendor_code']);
-                if (! $vendor) {
+                $vendor = $vendors->get($scenario['vendor_code'] ?? '');
+                if (($scenario['vendor_code'] ?? null) && ! $vendor) {
                     continue;
                 }
 
@@ -431,17 +651,20 @@ class PengadaanSeeder extends Seeder
                 }
 
                 $pengadaan = Pengadaan::firstOrCreate(
-                    ['no_pesanan_spk' => $scenario['no']],
+                    $scenario['no']
+                        ? ['no_pesanan_spk' => $scenario['no']]
+                        : ['no_pesanan_spk' => null, 'nama_pemohon' => $scenario['pemohon'] ?? $admin->name],
                     [
                         'nama_pemohon' => $scenario['pemohon'] ?? $admin->name,
                         'tipe_biaya' => ($scenario['tipe_biaya'] ?? TipeBiaya::FixCost)->value,
                         'nama_project' => $scenario['nama_project'] ?? null,
                         'no_wbs' => $scenario['no_wbs'] ?? null,
-                        'vendor_id' => $vendor->id,
-                        'bisnis_area_id' => $bisnisAreas->get($scenario['bisnis_area'] ?? 'TRL'),
+                        'vendor_id' => $vendor?->id,
+                        'bisnis_area_id' => ($scenario['tipe_biaya'] ?? TipeBiaya::FixCost) === TipeBiaya::RabProject
+                            ? $bisnisAreas->get($scenario['bisnis_area'] ?? 'TRL')
+                            : null,
                         'cabang_id' => $scenario['cabang']?->id,
-                        'tanggal_pesanan_spk' => $scenario['tanggal'],
-                        'tanggal_jatuh_tempo' => $scenario['tanggal_jatuh_tempo'] ?? $scenario['tanggal']->copy()->addDays(30),
+                        'tanggal_pesanan_spk' => $scenario['tanggal'] ?? null,
                         'total_biaya' => $totalBiaya,
                         'status_approval' => $scenario['status']->value,
                         'approved_by' => $scenario['status'] !== PengadaanApprovalStatus::Pending ? $admin->id : null,
@@ -495,10 +718,10 @@ class PengadaanSeeder extends Seeder
                     // lalu tulis file dummy ke disk agar download() bekerja.
                     $path = $fileStorage->buildPath(
                         'pengadaan-evidence',
-                        [$pengadaan->no_pesanan_spk],
+                        [$pengadaan->spk_slug],
                         $evidence['name']
                     );
-                    $dummyContent = "Seeded evidence file for {$pengadaan->no_pesanan_spk}: {$evidence['name']}";
+                    $dummyContent = "Seeded evidence file for {$pengadaan->spk_slug}: {$evidence['name']}";
                     Storage::disk($disk)->put($path, $dummyContent);
                     $size = strlen($dummyContent);
 
@@ -525,7 +748,6 @@ class PengadaanSeeder extends Seeder
                             [
                                 'tanggal_invoice' => $invoiceData['tanggal'],
                                 'jumlah' => $invoiceData['jumlah'],
-                                'jatuh_tempo' => $invoiceData['jatuh_tempo'],
                                 'catatan' => $invoiceData['catatan'] ?? null,
                                 'file_status' => null, // seeder tidak upload file fisik invoice
                             ]
@@ -560,7 +782,7 @@ class PengadaanSeeder extends Seeder
         $service = app(ApprovalService::class);
         $target = $scenario['status'];
 
-        $submittedAt = Carbon::parse($scenario['tanggal'])->copy()->setTime(9, 0);
+        $submittedAt = Carbon::parse($scenario['submitted_at'] ?? $scenario['tanggal'] ?? now())->copy()->setTime(9, 0);
         $instance = $service->submit($pengadaan, $admin);
 
         if (! $instance) {
@@ -576,8 +798,11 @@ class PengadaanSeeder extends Seeder
 
         $at = $submittedAt->copy();
         $lastPosition = $instance->steps->max('position');
-        // Pending: hanya jalankan step pertama agar terlihat "sedang diproses"
-        $maxStepsToComplete = $target === PengadaanApprovalStatus::Pending ? 1 : PHP_INT_MAX;
+        // Pending: sisakan step terakhir agar terlihat "sedang diproses" —
+        // flow 1 tahap berarti tidak ada step yang dijalankan sama sekali.
+        $maxStepsToComplete = $target === PengadaanApprovalStatus::Pending
+            ? max(0, $lastPosition - 1)
+            : PHP_INT_MAX;
         $completed = 0;
 
         while ($instance->refresh()->isInProgress() && $completed < $maxStepsToComplete) {
@@ -611,8 +836,5 @@ class PengadaanSeeder extends Seeder
         // Samakan timestamp akhir dengan skenario (approved_at bisa berbeda hari)
         $finalAt = $scenario['approved_at'] ?? $at;
         $instance->update(['completed_at' => $instance->completed_at ? $finalAt : null]);
-
-        if ($target !== PengadaanApprovalStatus::Pending) {
-        }
     }
 }

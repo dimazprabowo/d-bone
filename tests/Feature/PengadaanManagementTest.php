@@ -214,15 +214,15 @@ class PengadaanManagementTest extends TestCase
             ->set('tipe_biaya', 'RAB Project')
             ->set('klaster_id', $vendor->klaster_id)
             ->set('vendor_id', $vendor->id)
-            ->set('bisnis_area_id', BisnisArea::factory()->create()->id)
             ->set('tanggal_pesanan_spk', now()->format('Y-m-d'))
             ->set('items', [
                 ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => null, 'qty' => 1, 'satuan_id' => Satuan::factory()->create()->id, 'harga_satuan' => '5000000'],
             ])
             ->call('save')
-            ->assertHasErrors(['nama_project', 'no_wbs'])
+            ->assertHasErrors(['nama_project', 'no_wbs', 'bisnis_area_id'])
             ->set('nama_project', 'Project Kalibrasi Tahap 1')
             ->set('no_wbs', 'wbs-prj-001')
+            ->set('bisnis_area_id', BisnisArea::factory()->create()->id)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -231,6 +231,36 @@ class PengadaanManagementTest extends TestCase
             'tipe_biaya' => 'RAB Project',
             'nama_project' => 'Project Kalibrasi Tahap 1',
             'no_wbs' => 'WBS-PRJ-001',
+        ]);
+    }
+
+    public function test_user_can_create_pengadaan_with_only_required_fields(): void
+    {
+        $user = $this->actingUserWithPermissions(['pengadaan_view', 'pengadaan_create']);
+
+        $this->actingAs($user);
+
+        Livewire::test(PengadaanForm::class)
+            ->set('no_pesanan_spk', null)
+            ->set('nama_pemohon', 'Budi Santoso')
+            ->set('tipe_biaya', 'Fix Cost')
+            ->set('klaster_id', null)
+            ->set('vendor_id', null)
+            ->set('bisnis_area_id', null)
+            ->set('tanggal_pesanan_spk', null)
+            ->set('items', [
+                ['id' => null, 'nama_item' => 'Laptop', 'kategori_item_id' => null, 'qty' => 1, 'satuan_id' => Satuan::factory()->create()->id, 'harga_satuan' => '5000000'],
+            ])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('pengadaans', [
+            'no_pesanan_spk' => null,
+            'nama_pemohon' => 'Budi Santoso',
+            'vendor_id' => null,
+            'bisnis_area_id' => null,
+            'tanggal_pesanan_spk' => null,
+            'total_biaya' => 5000000,
         ]);
     }
 
@@ -328,24 +358,42 @@ class PengadaanManagementTest extends TestCase
         $this->assertSoftDeleted('pengadaans', ['id' => $pengadaan->id]);
     }
 
-    public function test_jatuh_tempo_alert_uses_configured_warning_days(): void
+    public function test_jatuh_tempo_status_derived_from_unpaid_invoice_age(): void
     {
         SystemConfiguration::create([
             'key' => 'pengadaan.jatuh_tempo_warning_days',
             'category' => 'pengadaan',
-            'value' => '7',
+            'value' => '30',
+            'data_type' => 'integer',
+            'is_editable' => true,
+            'is_active' => true,
+        ]);
+        SystemConfiguration::create([
+            'key' => 'pengadaan.jatuh_tempo_overdue_days',
+            'category' => 'pengadaan',
+            'value' => '60',
             'data_type' => 'integer',
             'is_editable' => true,
             'is_active' => true,
         ]);
 
-        $dueSoon = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->addDays(3)]);
-        $overdue = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->subDay()]);
-        $safe = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->addDays(30)]);
+        $pengadaan = Pengadaan::factory()->create();
+        $aman = $pengadaan->invoices()->create(['no_invoice' => 'INV-A', 'tanggal_invoice' => now()->subDays(10), 'jumlah' => 1000]);
+        $proses = $pengadaan->invoices()->create(['no_invoice' => 'INV-B', 'tanggal_invoice' => now()->subDays(40), 'jumlah' => 1000]);
+        $lewat = $pengadaan->invoices()->create(['no_invoice' => 'INV-C', 'tanggal_invoice' => now()->subDays(70), 'jumlah' => 1000]);
 
-        $this->assertSame(JatuhTempoStatus::Proses, $dueSoon->jatuh_tempo_alert);
-        $this->assertSame(JatuhTempoStatus::Lewat, $overdue->jatuh_tempo_alert);
-        $this->assertSame(JatuhTempoStatus::Aman, $safe->jatuh_tempo_alert);
+        $this->assertSame(JatuhTempoStatus::Aman, $aman->jatuh_tempo_status);
+        $this->assertSame(JatuhTempoStatus::Proses, $proses->jatuh_tempo_status);
+        $this->assertSame(JatuhTempoStatus::Lewat, $lewat->jatuh_tempo_status);
+        $this->assertSame(JatuhTempoStatus::Lewat, $pengadaan->jatuh_tempo_status);
+
+        // Invoice lunas tidak ikut dihitung status jatuh tempo
+        $pengadaanLunas = Pengadaan::factory()->create();
+        $lunas = $pengadaanLunas->invoices()->create(['no_invoice' => 'INV-D', 'tanggal_invoice' => now()->subDays(80), 'jumlah' => 1000]);
+        $lunas->payments()->create(['tanggal_bayar' => now(), 'jumlah_bayar' => 1000, 'metode_bayar' => 'Transfer']);
+
+        $this->assertNull($lunas->jatuh_tempo_status);
+        $this->assertNull($pengadaanLunas->jatuh_tempo_status);
     }
 
     public function test_jatuh_tempo_alert_disabled_when_config_inactive(): void
@@ -353,16 +401,16 @@ class PengadaanManagementTest extends TestCase
         SystemConfiguration::create([
             'key' => 'pengadaan.jatuh_tempo_warning_days',
             'category' => 'pengadaan',
-            'value' => '7',
+            'value' => '30',
             'data_type' => 'integer',
             'is_editable' => true,
             'is_active' => false,
         ]);
 
-        $dueSoon = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->addDays(3)]);
-        $overdue = Pengadaan::factory()->create(['tanggal_jatuh_tempo' => now()->subDay()]);
+        $pengadaan = Pengadaan::factory()->create();
+        $invoice = $pengadaan->invoices()->create(['no_invoice' => 'INV-E', 'tanggal_invoice' => now()->subDays(70), 'jumlah' => 1000]);
 
-        $this->assertNull($dueSoon->jatuh_tempo_alert);
-        $this->assertNull($overdue->jatuh_tempo_alert);
+        $this->assertNull($invoice->jatuh_tempo_status);
+        $this->assertNull($pengadaan->jatuh_tempo_status);
     }
 }

@@ -4,14 +4,14 @@
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
                 <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $pengadaan->no_pesanan_spk }}</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $pengadaan->no_pesanan_spk ?? '-' }}</h2>
                     <span class="px-2 py-1 text-xs font-medium rounded-full {{ $pengadaan->status_approval->badgeClass() }}">
                         {{ $pengadaan->status_approval->label() }}
                     </span>
                 </div>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ $pengadaan->tanggal_pesanan_spk->format('d F Y') }} • Vendor: {{ $pengadaan->vendor->name }} ({{ $pengadaan->vendor->klaster->name }})
-                    • Cabang: {{ $pengadaan->cabang->name ?? 'Pusat' }}{{ $pengadaan->tanggal_jatuh_tempo ? ' • Jatuh tempo: '.$pengadaan->tanggal_jatuh_tempo->format('d/m/Y') : '' }} • Bisnis Area: {{ $pengadaan->bisnisArea->name ?? '-' }}
+                    {{ $pengadaan->tanggal_pesanan_spk?->format('d F Y') ?? '-' }} • Vendor: {{ $pengadaan->vendor->name ?? '-' }}{{ $pengadaan->vendor?->klaster ? ' ('.$pengadaan->vendor->klaster->name.')' : '' }}
+                    • Cabang: {{ $pengadaan->cabang->name ?? 'Pusat' }} • Bisnis Area: {{ $pengadaan->bisnisArea->name ?? '-' }}
                 </p>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Pemohon: {{ $pengadaan->nama_pemohon }} • Tipe Biaya: {{ $pengadaan->tipe_biaya->label() }}{{ $pengadaan->nama_project ? ' • Project: '.$pengadaan->nama_project : '' }}{{ $pengadaan->no_wbs ? ' • No. WBS: '.$pengadaan->no_wbs : '' }}
@@ -262,8 +262,8 @@
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                     {{ $invoice->tanggal_invoice->format('d/m/Y') }}
-                                    @if($invoice->jatuh_tempo)
-                                        • Jatuh tempo: {{ $invoice->jatuh_tempo->format('d/m/Y') }}
+                                    @if($invoice->jatuh_tempo_derived)
+                                        • Jatuh tempo: {{ $invoice->jatuh_tempo_derived->format('d/m/Y') }}
                                     @endif
                                 </p>
                             </div>
@@ -439,11 +439,6 @@
                                 <div>
                                     <x-rupiah-input wire-model="inv_jumlah" label="Jumlah Tagihan" :required="true" id="inv_jumlah" />
                                     <x-input-error :messages="$errors->get('inv_jumlah')" class="mt-2" />
-                                </div>
-                                <div>
-                                    <x-input-label for="inv_jatuh_tempo" value="Jatuh Tempo" />
-                                    <x-date-picker wire:model="inv_jatuh_tempo" id="inv_jatuh_tempo" />
-                                    <x-input-error :messages="$errors->get('inv_jatuh_tempo')" class="mt-2" />
                                 </div>
                                 <div class="sm:col-span-2">
                                     <x-input-label for="inv_catatan" value="Catatan" />
