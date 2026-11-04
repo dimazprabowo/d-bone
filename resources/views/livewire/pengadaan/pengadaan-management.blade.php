@@ -203,7 +203,7 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bisnis Area</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cabang</th>
                         <x-sortable-th field="tanggal_pesanan_spk" :sort-field="$sortField" :sort-direction="$sortDirection">Tgl. Pesanan/SPK</x-sortable-th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</th>
+                        <x-sortable-th field="jatuh_tempo" :sort-field="$sortField" :sort-direction="$sortDirection">Jatuh Tempo</x-sortable-th>
                         <x-sortable-th field="total_biaya" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Total Biaya</x-sortable-th>
                         <x-sortable-th field="saldo_belum_bayar" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Saldo Belum Bayar</x-sortable-th>
                         <x-sortable-th field="status_pembayaran" :sort-field="$sortField" :sort-direction="$sortDirection">Status Bayar</x-sortable-th>

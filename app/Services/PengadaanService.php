@@ -64,6 +64,20 @@ class PengadaanService
             return $query->orderByRaw("$expr $direction")->orderByDesc('id')->paginate($perPage);
         }
 
+        // Jatuh tempo = status derived — sortir berdasarkan ranking severity
+        // yang identik dengan badge: Lewat(3) > Proses(2) > Aman(1) > kosong(0).
+        if ($sortField === 'jatuh_tempo') {
+            $unpaidSql = '(SELECT COALESCE(SUM(ip.jumlah_bayar),0) FROM invoice_payments ip WHERE ip.invoice_id = i.id) < i.jumlah';
+            $warnDate = today()->subDays(ConfigHelper::getJatuhTempoWarningDays())->toDateString();
+            $overdueDate = today()->subDays(ConfigHelper::getJatuhTempoOverdueDays())->toDateString();
+            $hasUnpaid = "EXISTS (SELECT 1 FROM invoices i WHERE i.pengadaan_id = pengadaans.id AND $unpaidSql)";
+            $hasWarn = "EXISTS (SELECT 1 FROM invoices i WHERE i.pengadaan_id = pengadaans.id AND $unpaidSql AND i.tanggal_invoice <= '$warnDate')";
+            $hasOverdue = "EXISTS (SELECT 1 FROM invoices i WHERE i.pengadaan_id = pengadaans.id AND $unpaidSql AND i.tanggal_invoice <= '$overdueDate')";
+            $rank = "CASE WHEN $hasOverdue THEN 3 WHEN $hasWarn THEN 2 WHEN $hasUnpaid THEN 1 ELSE 0 END";
+
+            return $query->orderByRaw("$rank $direction")->orderByDesc('id')->paginate($perPage);
+        }
+
         $sortable = ['no_pesanan_spk', 'tanggal_pesanan_spk', 'total_biaya', 'status_approval'];
         $field = in_array($sortField, $sortable, true) ? $sortField : 'tanggal_pesanan_spk';
 
