@@ -47,9 +47,9 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendor</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Klaster</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kontak</th>
-                        <x-sortable-th field="email" :sort-field="$sortField" :sort-direction="$sortDirection">Email</x-sortable-th>
+                        <x-sortable-header field="email" :sort-field="$sortField" :sort-dir="$sortDir">Email</x-sortable-header>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">NPWP</th>
-                        <x-sortable-th field="status" :sort-field="$sortField" :sort-direction="$sortDirection">Status</x-sortable-th>
+                        <x-sortable-header field="status" :sort-field="$sortField" :sort-dir="$sortDir">Status</x-sortable-header>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>

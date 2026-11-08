@@ -1,5 +1,6 @@
 @props([
     'name' => 'confirm-modal',
+    'eventName' => 'confirm-modal',
     'title' => 'Konfirmasi',
     'message' => 'Apakah Anda yakin?',
     'confirmText' => 'Ya, Lanjutkan',
@@ -16,7 +17,9 @@
     type: '{{ $type }}',
     action: null,
     actionParams: null,
-    
+    confirmLoading: false,
+    cancelLoading: false,
+
     showModal(data) {
         this.title = data.title || '{{ $title }}';
         this.message = data.message || '{{ $message }}';
@@ -25,26 +28,43 @@
         this.type = data.type || '{{ $type }}';
         this.action = data.action || null;
         this.actionParams = data.actionParams || null;
+        this.confirmLoading = false;
+        this.cancelLoading = false;
         this.show = true;
     },
-    
+
     confirm() {
+        if (this.confirmLoading) return;
+        this.confirmLoading = true;
         if (this.action) {
-            // Dispatch Livewire event with action name and params
             if (this.actionParams !== null) {
                 $wire.call(this.action, this.actionParams);
             } else {
                 $wire.call(this.action);
             }
         }
-        this.show = false;
+        // Modal tetap terbuka dengan loading state.
+        // Untuk logout: halaman redirect otomatis → modal hilang.
+        // Untuk aksi non-redirect: component dispatch event '{eventName}-close' untuk tutup modal.
     },
-    
-    cancel() {
+
+    close() {
         this.show = false;
+        this.confirmLoading = false;
+        this.cancelLoading = false;
+    },
+
+    cancel() {
+        if (this.cancelLoading) return;
+        this.cancelLoading = true;
+        setTimeout(() => {
+            this.show = false;
+            this.cancelLoading = false;
+        }, 300);
     }
 }"
-@confirm-modal.window="showModal($event.detail)"
+x-on:{{ $eventName }}.window="showModal($event.detail)"
+x-on:{{ $eventName }}-close.window="close()"
 x-show="show"
 x-cloak
 class="fixed inset-0 z-50 overflow-y-auto custom-scrollbar"
@@ -110,18 +130,30 @@ style="display: none;">
             <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
                 <button type="button"
                         @click="confirm()"
-                        class="w-full inline-flex justify-center rounded-lg px-4 py-2 text-base font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
+                        :disabled="confirmLoading"
+                        class="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-base font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                         :class="{
                             'bg-red-600 hover:bg-red-700 focus:ring-red-500': type === 'danger',
                             'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500': type === 'warning',
                             'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500': type === 'info'
-                        }"
-                        x-text="confirmText">
+                        }">
+                    <svg x-show="confirmLoading" x-cloak class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span x-show="!confirmLoading" x-text="confirmText"></span>
+                    <span x-show="confirmLoading" x-cloak>Memproses...</span>
                 </button>
                 <button type="button"
                         @click="cancel()"
-                        class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                        x-text="cancelText">
+                        :disabled="cancelLoading"
+                        class="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
+                    <svg x-show="cancelLoading" x-cloak class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span x-show="!cancelLoading" x-text="cancelText"></span>
+                    <span x-show="cancelLoading" x-cloak>Membatalkan...</span>
                 </button>
             </div>
         </div>

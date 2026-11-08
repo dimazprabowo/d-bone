@@ -197,16 +197,16 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <x-sortable-th field="status_approval" :sort-field="$sortField" :sort-direction="$sortDirection">Status</x-sortable-th>
-                        <x-sortable-th field="no_pesanan_spk" :sort-field="$sortField" :sort-direction="$sortDirection">No. Pesanan/SPK</x-sortable-th>
+                        <x-sortable-header field="status_approval" :sort-field="$sortField" :sort-dir="$sortDir">Status</x-sortable-header>
+                        <x-sortable-header field="no_pesanan_spk" :sort-field="$sortField" :sort-dir="$sortDir">No. Pesanan/SPK</x-sortable-header>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendor</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bisnis Area</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cabang</th>
-                        <x-sortable-th field="tanggal_pesanan_spk" :sort-field="$sortField" :sort-direction="$sortDirection">Tgl. Pesanan/SPK</x-sortable-th>
-                        <x-sortable-th field="jatuh_tempo" :sort-field="$sortField" :sort-direction="$sortDirection">Jatuh Tempo</x-sortable-th>
-                        <x-sortable-th field="total_biaya" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Total Biaya</x-sortable-th>
-                        <x-sortable-th field="saldo_belum_bayar" :sort-field="$sortField" :sort-direction="$sortDirection" align="right">Saldo Belum Bayar</x-sortable-th>
-                        <x-sortable-th field="status_pembayaran" :sort-field="$sortField" :sort-direction="$sortDirection">Status Bayar</x-sortable-th>
+                        <x-sortable-header field="tanggal_pesanan_spk" :sort-field="$sortField" :sort-dir="$sortDir">Tgl. Pesanan/SPK</x-sortable-header>
+                        <x-sortable-header field="jatuh_tempo" :sort-field="$sortField" :sort-dir="$sortDir">Jatuh Tempo</x-sortable-header>
+                        <x-sortable-header field="total_biaya" :sort-field="$sortField" :sort-dir="$sortDir" align="right">Total Biaya</x-sortable-header>
+                        <x-sortable-header field="saldo_belum_bayar" :sort-field="$sortField" :sort-dir="$sortDir" align="right">Saldo Belum Bayar</x-sortable-header>
+                        <x-sortable-header field="status_pembayaran" :sort-field="$sortField" :sort-dir="$sortDir">Status Bayar</x-sortable-header>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>

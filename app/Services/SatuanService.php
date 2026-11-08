@@ -5,19 +5,20 @@ namespace App\Services;
 use App\Enums\SatuanStatus;
 use App\Models\Satuan;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class SatuanService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     public function getFiltered(
         ?string $search = null,
         ?string $statusFilter = null,
         int $perPage = 15,
-        ?string $sortField = 'name',
-        ?string $sortDirection = 'asc'
+        ?string $sortField = null,
+        string $sortDir = 'asc'
     ): LengthAwarePaginator {
         $query = Satuan::withCount('pengadaanItems');
 
@@ -34,11 +35,17 @@ class SatuanService
             $query->where('status', $statusFilter);
         }
 
-        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
-        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+        $this->applySorting($query, [
+            'code' => 'satuans.code',
+            'name' => 'satuans.name',
+            'email' => 'satuans.email',
+            'pic_name' => 'satuans.pic_name',
+            'phone' => 'satuans.phone',
+            'status' => 'satuans.status',
+            'created_at' => 'satuans.created_at',
+        ], $sortField, $sortDir, 'name');
 
-        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data): Satuan

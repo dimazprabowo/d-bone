@@ -5,7 +5,7 @@ namespace App\Livewire\MasterData;
 use App\Enums\CabangStatus;
 use App\Exports\CabangExport;
 use App\Livewire\Traits\HasNotification;
-use App\Livewire\Traits\WithSorting;
+use App\Livewire\Traits\HasTableSorting;
 use App\Models\Cabang;
 use App\Services\CabangService;
 use App\Traits\HasDynamicLike;
@@ -18,7 +18,7 @@ use Livewire\WithPagination;
 
 class CabangManagement extends Component
 {
-    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination, WithSorting;
+    use AuthorizesRequests, HasDynamicLike, HasNotification, HasTableSorting, WithPagination;
 
     public $search = '';
 
@@ -54,6 +54,7 @@ class CabangManagement extends Component
 
     public function mount()
     {
+        $this->sortField = 'name';
         $this->authorize('viewAny', Cabang::class);
     }
 
@@ -278,7 +279,7 @@ class CabangManagement extends Component
 
     public function render(CabangService $service)
     {
-        $cabangs = $service->getFiltered($this->search, $this->statusFilter, sortField: $this->sortField, sortDirection: $this->sortDirection);
+        $cabangs = $service->getFiltered($this->search, $this->statusFilter, sortField: $this->sortField, sortDir: $this->sortDir);
 
         if ($this->filterChanged) {
             $this->notifySuccess("Ditemukan {$cabangs->total()} data cabang.");

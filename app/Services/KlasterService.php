@@ -5,19 +5,20 @@ namespace App\Services;
 use App\Enums\KlasterStatus;
 use App\Models\Klaster;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class KlasterService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     public function getFiltered(
         ?string $search = null,
         ?string $statusFilter = null,
         int $perPage = 15,
-        ?string $sortField = 'name',
-        ?string $sortDirection = 'asc'
+        ?string $sortField = null,
+        string $sortDir = 'asc'
     ): LengthAwarePaginator {
         $query = Klaster::withCount('vendors');
 
@@ -34,11 +35,17 @@ class KlasterService
             $query->where('status', $statusFilter);
         }
 
-        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
-        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+        $this->applySorting($query, [
+            'code' => 'klasters.code',
+            'name' => 'klasters.name',
+            'email' => 'klasters.email',
+            'pic_name' => 'klasters.pic_name',
+            'phone' => 'klasters.phone',
+            'status' => 'klasters.status',
+            'created_at' => 'klasters.created_at',
+        ], $sortField, $sortDir, 'name');
 
-        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data): Klaster

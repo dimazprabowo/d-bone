@@ -5,19 +5,20 @@ namespace App\Services;
 use App\Enums\KategoriItemStatus;
 use App\Models\KategoriItem;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class KategoriItemService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     public function getFiltered(
         ?string $search = null,
         ?string $statusFilter = null,
         int $perPage = 15,
-        ?string $sortField = 'name',
-        ?string $sortDirection = 'asc'
+        ?string $sortField = null,
+        string $sortDir = 'asc'
     ): LengthAwarePaginator {
         $query = KategoriItem::withCount(['vendors', 'pengadaanItems']);
 
@@ -33,11 +34,17 @@ class KategoriItemService
             $query->where('status', $statusFilter);
         }
 
-        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
-        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+        $this->applySorting($query, [
+            'code' => 'kategori_items.code',
+            'name' => 'kategori_items.name',
+            'email' => 'kategori_items.email',
+            'pic_name' => 'kategori_items.pic_name',
+            'phone' => 'kategori_items.phone',
+            'status' => 'kategori_items.status',
+            'created_at' => 'kategori_items.created_at',
+        ], $sortField, $sortDir, 'name');
 
-        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data): KategoriItem

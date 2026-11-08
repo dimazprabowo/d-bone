@@ -12,12 +12,13 @@ use App\Models\Pengadaan;
 use App\Models\PengadaanEvidence;
 use App\Models\User;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class PengadaanService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     /**
      * Apply cabang scoping to a query based on the authenticated user.
@@ -43,15 +44,15 @@ class PengadaanService
         array $cabangFilter = [],
         array $statusFilter = [],
         int $perPage = 15,
-        string $sortField = 'tanggal_pesanan_spk',
-        string $sortDirection = 'desc',
+        ?string $sortField = 'tanggal_pesanan_spk',
+        string $sortDir = 'desc',
         array $filters = []
     ): LengthAwarePaginator {
         $query = Pengadaan::with(['vendor', 'cabang', 'bisnisArea', 'approver', 'invoices.payments'])->withCount(['items', 'evidences', 'invoices']);
 
         $this->applyListFilters($query, $search, $vendorFilter, $cabangFilter, $statusFilter, $filters);
 
-        $direction = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
+        $direction = strtolower($sortDir) === 'asc' ? 'asc' : 'desc';
 
         if ($sortField === 'saldo_belum_bayar' || $sortField === 'status_pembayaran') {
             $hasInv = 'EXISTS (SELECT 1 FROM invoices i0 WHERE i0.pengadaan_id = pengadaans.id)';
@@ -78,12 +79,14 @@ class PengadaanService
             return $query->orderByRaw("$rank $direction")->orderByDesc('id')->paginate($perPage);
         }
 
-        $sortable = ['no_pesanan_spk', 'tanggal_pesanan_spk', 'total_biaya', 'status_approval'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'tanggal_pesanan_spk';
+        $this->applySorting($query, [
+            'no_pesanan_spk' => 'pengadaans.no_pesanan_spk',
+            'tanggal_pesanan_spk' => 'pengadaans.tanggal_pesanan_spk',
+            'total_biaya' => 'pengadaans.total_biaya',
+            'status_approval' => 'pengadaans.status_approval',
+        ], $sortField, $sortDir, 'tanggal_pesanan_spk', 'desc');
 
-        return $query->orderBy($field, $direction)
-            ->orderByDesc('id')
-            ->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     /**

@@ -5,19 +5,20 @@ namespace App\Services;
 use App\Enums\BisnisAreaStatus;
 use App\Models\BisnisArea;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class BisnisAreaService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     public function getFiltered(
         ?string $search = null,
         ?string $statusFilter = null,
         int $perPage = 15,
-        ?string $sortField = 'name',
-        ?string $sortDirection = 'asc'
+        ?string $sortField = null,
+        string $sortDir = 'asc'
     ): LengthAwarePaginator {
         $query = BisnisArea::withCount('pengadaans');
 
@@ -33,11 +34,17 @@ class BisnisAreaService
             $query->where('status', $statusFilter);
         }
 
-        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
-        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+        $this->applySorting($query, [
+            'code' => 'bisnis_areas.code',
+            'name' => 'bisnis_areas.name',
+            'email' => 'bisnis_areas.email',
+            'pic_name' => 'bisnis_areas.pic_name',
+            'phone' => 'bisnis_areas.phone',
+            'status' => 'bisnis_areas.status',
+            'created_at' => 'bisnis_areas.created_at',
+        ], $sortField, $sortDir, 'name');
 
-        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data): BisnisArea

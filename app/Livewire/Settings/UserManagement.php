@@ -5,7 +5,7 @@ namespace App\Livewire\Settings;
 use App\Enums\UserApprovalStatus;
 use App\Exports\UsersExport;
 use App\Livewire\Traits\HasNotification;
-use App\Livewire\Traits\WithSorting;
+use App\Livewire\Traits\HasTableSorting;
 use App\Models\Cabang;
 use App\Models\User;
 use App\Services\UserService;
@@ -19,7 +19,7 @@ use Spatie\Permission\Models\Role;
 
 class UserManagement extends Component
 {
-    use AuthorizesRequests, HasNotification, WithPagination, WithSorting;
+    use AuthorizesRequests, HasNotification, HasTableSorting, WithPagination;
 
     protected $paginationTheme = 'tailwind';
 
@@ -98,6 +98,7 @@ class UserManagement extends Component
 
     public function mount()
     {
+        $this->sortField = 'name';
         $this->authorize('viewAny', User::class);
     }
 
@@ -493,7 +494,7 @@ class UserManagement extends Component
             $this->roleFilter,
             $this->isActiveFilter !== '' ? $this->isActiveFilter : null,
             $this->approvalStatusFilter !== '' ? $this->approvalStatusFilter : null,
-            perPage: 9999, sortField: $this->sortField, sortDirection: $this->sortDirection);
+            perPage: 9999, sortField: $this->sortField, sortDir: $this->sortDir);
 
         $pdf = Pdf::loadView('exports.users-pdf', ['users' => $users]);
         $pdf->setPaper('a4', 'landscape');
@@ -511,7 +512,7 @@ class UserManagement extends Component
             $this->roleFilter,
             $this->isActiveFilter !== '' ? $this->isActiveFilter : null,
             $this->approvalStatusFilter !== '' ? $this->approvalStatusFilter : null,
-            $this->perPage, sortField: $this->sortField, sortDirection: $this->sortDirection);
+            $this->perPage, sortField: $this->sortField, sortDir: $this->sortDir);
 
         $pendingCount = $service->getPendingApprovalCount();
 

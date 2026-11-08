@@ -5,19 +5,20 @@ namespace App\Services;
 use App\Enums\CabangStatus;
 use App\Models\Cabang;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class CabangService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     public function getFiltered(
         ?string $search = null,
         ?string $statusFilter = null,
         int $perPage = 15,
-        ?string $sortField = 'name',
-        ?string $sortDirection = 'asc'
+        ?string $sortField = null,
+        string $sortDir = 'asc'
     ): LengthAwarePaginator {
         $query = Cabang::query();
 
@@ -36,11 +37,17 @@ class CabangService
             $query->where('status', $statusFilter);
         }
 
-        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
-        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+        $this->applySorting($query, [
+            'code' => 'cabangs.code',
+            'name' => 'cabangs.name',
+            'email' => 'cabangs.email',
+            'pic_name' => 'cabangs.pic_name',
+            'phone' => 'cabangs.phone',
+            'status' => 'cabangs.status',
+            'created_at' => 'cabangs.created_at',
+        ], $sortField, $sortDir, 'name');
 
-        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data): Cabang

@@ -8,6 +8,7 @@ use App\Enums\TipeBiaya;
 use App\Exports\PengadaanExport;
 use App\Helpers\ConfigHelper;
 use App\Livewire\Traits\HasNotification;
+use App\Livewire\Traits\HasTableSorting;
 use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\Pengadaan;
@@ -22,7 +23,7 @@ use Livewire\WithPagination;
 
 class PengadaanManagement extends Component
 {
-    use AuthorizesRequests, HasDynamicLike, HasNotification, WithPagination;
+    use AuthorizesRequests, HasDynamicLike, HasNotification, HasTableSorting, WithPagination;
 
     public $search = '';
 
@@ -49,10 +50,6 @@ class PengadaanManagement extends Component
     public $totalMax = '';
 
     public bool $filterChanged = false;
-
-    public $sortField = 'tanggal_pesanan_spk';
-
-    public $sortDirection = 'desc';
 
     // Delete modal
     public $showDeleteModal = false;
@@ -83,6 +80,8 @@ class PengadaanManagement extends Component
     public function mount()
     {
         $this->authorize('viewAny', Pengadaan::class);
+        $this->sortField = 'tanggal_pesanan_spk';
+        $this->sortDir = 'desc';
     }
 
     public function openStatusHistory(int $id): void
@@ -400,23 +399,11 @@ class PengadaanManagement extends Component
         );
     }
 
-    public function sortBy($field)
-    {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
-
-        $this->resetPage();
-    }
-
     public function render(PengadaanService $service)
     {
         $pengadaans = $service->getFiltered(
             $this->search, $this->vendorFilter, $this->cabangFilter, $this->statusFilter,
-            sortField: $this->sortField, sortDirection: $this->sortDirection,
+            sortField: $this->sortField, sortDir: $this->sortDir,
             filters: $this->activeFilters()
         );
 

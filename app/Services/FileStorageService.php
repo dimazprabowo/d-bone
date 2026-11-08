@@ -154,4 +154,34 @@ class FileStorageService
     {
         return $this->tempDisk;
     }
+
+    /**
+     * Stream a file inline (for browser playback via <audio>/<video> tags).
+     * Returns a response with Content-Disposition: inline so the browser
+     * can play the media directly instead of forcing a download.
+     * Supports HTTP Range requests for media seeking.
+     */
+    public function stream(string $path, ?string $displayName = null)
+    {
+        $disk = Storage::disk(file_disk());
+        $fullPath = $disk->path($path);
+        $mimeType = $disk->mimeType($path);
+        $size = $disk->size($path);
+
+        return response()->stream(function () use ($fullPath) {
+            $handle = fopen($fullPath, 'rb');
+            while (! feof($handle)) {
+                echo fread($handle, 8192);
+                ob_flush();
+                flush();
+            }
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Length' => $size,
+            'Content-Disposition' => 'inline; filename="'.($displayName ?? basename($path)).'"',
+            'Accept-Ranges' => 'bytes',
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
+    }
 }

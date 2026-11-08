@@ -69,6 +69,8 @@ triggers:
    - `App\Livewire\Traits\HasMenuItems` -> daftarkan menu baru DI SINI dengan Gate check (jangan hardcode di sidebar)
    - `App\Traits\HasDynamicLike` -> operator LIKE lintas DB (sqlite/mysql)
    - `App\Traits\HasEncryptedRouteKey` -> route-model-binding ID terenkripsi (cegah ID enumeration/IDOR)
+   - `App\Traits\SortsQuery` -> `applySorting()` whitelist + NULLS ordering + tie-break untuk semua list Service
+   - `App\Livewire\Traits\HasTableSorting` -> `$sortField`/`$sortDir` + `sortBy()` untuk semua tabel index (bukan WithSorting — sudah dihapus)
    - `App\Services\FileStorageService` -> simpan & pindah file ke storage (jangan copy-paste logic path builder)
 
 # Permission-First (ikuti template)
@@ -540,10 +542,10 @@ Warna button: `bg-emerald-600` (approve/success), `bg-red-600` (reject/danger), 
 - Relasi `creator()` / `updater()` tersedia — gunakan untuk tampilan "dibuat oleh / diubah oleh" di detail page & audit; eager load bila dipakai di list.
 
 # Sorting di Index (WAJIB pola ini)
-- `sortBy($field)` di Component: toggle asc/desc + `resetPage()`.
-- Di Service `getFiltered()`: WHITELIST field sortable (`in_array($sortField, $sortable, true)`, fallback default) — JANGAN langsung pakai input user ke orderBy.
-- Sorting pada kolom derived/agregat: pakai `orderByRaw` dengan ekspresi subquery (lihat `saldo_belum_bayar`/`status_pembayaran` di PengadaanService) — bukan sort di PHP.
-- Header kolom sortable tampilkan indikator panah asc/desc.
+- Component pakai trait `HasTableSorting` (properti `$sortField`/`$sortDir`) + set default sortField di `mount()`; `sortBy($field)` toggle asc/desc + `resetPage()`.
+- Service pakai trait `SortsQuery` → `$this->applySorting($query, $sortableMap, $sortField, $sortDir, $defaultField, $defaultDir)` — `$sortableMap` = whitelist key→ekspresi SQL (kolom qualified/subquery/CASE). JANGAN langsung pakai input user ke orderBy.
+- Header kolom sortable pakai `<x-sortable-header field="..." :sort-field="$sortField" :sort-dir="$sortDir">` (props: `compact`, `align`) — sudah ada spinner + highlight kolom aktif.
+- Sorting pada kolom derived/agregat: pakai ekspresi subquery/CASE di `$sortableMap` (lihat `saldo_belum_bayar`/`status_pembayaran` di PengadaanService, `approval_status` CASE di UserService) — bukan sort di PHP.
 
 # Dropdown Flip Positioning (WAJIB untuk dropdown/popover custom)
 - Dropdown yang membuka ke bawah WAJIB deteksi ruang viewport: jika `spaceBelow < tinggiDropdown` DAN `spaceAbove > spaceBelow` → render dengan `bottom-full mb-2`, selain itu `top-full mt-2`.

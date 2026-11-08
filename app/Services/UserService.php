@@ -4,15 +4,17 @@ namespace App\Services;
 
 use App\Enums\UserApprovalStatus;
 use App\Helpers\ConfigHelper;
+use App\Models\Cabang;
 use App\Models\User;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     public function getFilteredUsers(
         ?string $search = null,
@@ -20,8 +22,8 @@ class UserService
         ?string $isActive = null,
         ?string $approvalStatus = null,
         int $perPage = 15,
-        ?string $sortField = 'name',
-        ?string $sortDirection = 'asc'
+        ?string $sortField = null,
+        string $sortDir = 'asc'
     ): LengthAwarePaginator {
         $query = User::with(['roles', 'cabang']);
 
@@ -47,11 +49,24 @@ class UserService
             $query->where('approval_status', $approvalStatus);
         }
 
-        $sortable = ['name', 'email', 'phone', 'position', 'is_active', 'approval_status', 'created_at'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
-        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+        $sortable = [
+            'name' => 'users.name',
+            'email' => 'users.email',
+            'cabang' => '('.Cabang::select('name')->whereColumn('cabangs.id', 'users.cabang_id')->limit(1)->toSql().')',
+            'phone' => 'users.phone',
+            'position' => 'users.position',
+            // CASE mengurutkan mengikuti urutan workflow enum (pending ->
+            // approved -> rejected), bukan alfabet nilai kolom.
+            'approval_status' => 'CASE users.approval_status '.collect(UserApprovalStatus::cases())
+                ->map(fn ($s, $i) => "WHEN '{$s->value}' THEN {$i}")
+                ->implode(' ').' ELSE '.count(UserApprovalStatus::cases()).' END',
+            'is_active' => 'users.is_active',
+            'created_at' => 'users.created_at',
+        ];
 
-        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
+        $this->applySorting($query, $sortable, $sortField, $sortDir, 'name');
+
+        return $query->paginate($perPage);
     }
 
     public function create(array $data, array $roles): User
@@ -125,7 +140,7 @@ class UserService
             throw new \DomainException('Hanya user dengan status menunggu approval yang dapat disetujui.');
         }
 
-        return DB::transaction(function () use ($user, $approver) {
+        $user = DB::transaction(function () use ($user, $approver) {
             $user->update([
                 'approval_status' => UserApprovalStatus::Approved,
                 'is_active' => true,
@@ -141,13 +156,16 @@ class UserService
                 $user->assignRole(ConfigHelper::getDefaultRegistrationRole());
             }
 
-            // Kirim email verifikasi setelah approval (link verifikasi butuh login, jadi wajib tunggu akun aktif)
-            if (! $user->hasVerifiedEmail()) {
-                $user->sendEmailVerificationNotification();
-            }
-
             return $user;
         });
+
+        // Kirim email verifikasi SETELAH transaction commit (async via queue).
+        // Link verifikasi butuh login, jadi wajib tunggu akun aktif di DB dulu.
+        if (! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        return $user;
     }
 
     public function rejectUser(User $user, User $rejecter, string $reason): User

@@ -5,20 +5,21 @@ namespace App\Services;
 use App\Enums\VendorStatus;
 use App\Models\Vendor;
 use App\Traits\HasDynamicLike;
+use App\Traits\SortsQuery;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class VendorService
 {
-    use HasDynamicLike;
+    use HasDynamicLike, SortsQuery;
 
     public function getFiltered(
         ?string $search = null,
         ?string $statusFilter = null,
         int $perPage = 15,
-        ?string $sortField = 'name',
-        ?string $sortDirection = 'asc'
+        ?string $sortField = null,
+        string $sortDir = 'asc'
     ): LengthAwarePaginator {
         $query = Vendor::with('klaster')->withCount(['pengadaans', 'kategoriItems']);
 
@@ -37,11 +38,17 @@ class VendorService
             $query->where('status', $statusFilter);
         }
 
-        $sortable = ['code', 'name', 'email', 'pic_name', 'phone', 'status', 'created_at'];
-        $field = in_array($sortField, $sortable, true) ? $sortField : 'name';
-        $direction = strtolower((string) $sortDirection) === 'desc' ? 'desc' : 'asc';
+        $this->applySorting($query, [
+            'code' => 'vendors.code',
+            'name' => 'vendors.name',
+            'email' => 'vendors.email',
+            'pic_name' => 'vendors.pic_name',
+            'phone' => 'vendors.phone',
+            'status' => 'vendors.status',
+            'created_at' => 'vendors.created_at',
+        ], $sortField, $sortDir, 'name');
 
-        return $query->orderBy($field, $direction)->orderByDesc('id')->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data, array $kategoriItemIds = []): Vendor
