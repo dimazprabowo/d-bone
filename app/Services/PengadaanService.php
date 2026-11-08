@@ -81,6 +81,7 @@ class PengadaanService
 
         $this->applySorting($query, [
             'no_pesanan_spk' => 'pengadaans.no_pesanan_spk',
+            'nama_pemohon' => 'pengadaans.nama_pemohon',
             'tanggal_pesanan_spk' => 'pengadaans.tanggal_pesanan_spk',
             'total_biaya' => 'pengadaans.total_biaya',
             'status_approval' => 'pengadaans.status_approval',
@@ -103,6 +104,7 @@ class PengadaanService
             $operator = $this->getLikeOperator();
             $query->where(function ($q) use ($search, $operator) {
                 $q->where('no_pesanan_spk', $operator, "%{$search}%")
+                    ->orWhere('nama_pemohon', $operator, "%{$search}%")
                     ->orWhereHas('vendor', function ($v) use ($search, $operator) {
                         $v->where('name', $operator, "%{$search}%");
                     });

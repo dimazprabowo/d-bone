@@ -200,6 +200,7 @@
                         <x-sortable-header field="status_approval" :sort-field="$sortField" :sort-dir="$sortDir">Status</x-sortable-header>
                         <x-sortable-header field="no_pesanan_spk" :sort-field="$sortField" :sort-dir="$sortDir">No. Pesanan/SPK</x-sortable-header>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendor</th>
+                        <x-sortable-header field="nama_pemohon" :sort-field="$sortField" :sort-dir="$sortDir">Pemohon</x-sortable-header>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bisnis Area</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cabang</th>
                         <x-sortable-header field="tanggal_pesanan_spk" :sort-field="$sortField" :sort-dir="$sortDir">Tgl. Pesanan/SPK</x-sortable-header>
@@ -228,6 +229,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->vendor->name ?? '-' }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900 dark:text-white">{{ $pengadaan->nama_pemohon }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">{{ $pengadaan->bisnisArea->name ?? '-' }}</span>
@@ -327,7 +331,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center">
+                            <td colspan="11" class="px-6 py-12 text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/></svg>
                                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Tidak ada pengadaan ditemukan</p>
                             </td>

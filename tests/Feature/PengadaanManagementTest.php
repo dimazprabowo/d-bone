@@ -61,6 +61,20 @@ class PengadaanManagementTest extends TestCase
             ->assertSee('SPK-TEST-001');
     }
 
+    public function test_pengadaan_list_search_matches_nama_pemohon(): void
+    {
+        $user = $this->actingUserWithPermissions(['pengadaan_view']);
+        Pengadaan::factory()->create(['nama_pemohon' => 'Budi Santoso', 'no_pesanan_spk' => 'SPK-PEMOHON-1']);
+        Pengadaan::factory()->create(['nama_pemohon' => 'Joko Prasetyo', 'no_pesanan_spk' => 'SPK-PEMOHON-2']);
+
+        $this->actingAs($user);
+
+        Livewire::test(PengadaanManagement::class)
+            ->set('search', 'Budi Santoso')
+            ->assertSee('SPK-PEMOHON-1')
+            ->assertDontSee('SPK-PEMOHON-2');
+    }
+
     public function test_dropdown_filters_accept_multiple_values(): void
     {
         $user = $this->actingUserWithPermissions(['pengadaan_view']);
