@@ -72,6 +72,26 @@ class User extends Authenticatable implements MustVerifyEmail
             ->withTimestamps();
     }
 
+    /**
+     * Bisnis area yang di-assign ke user (pivot `bisnis_area_user`).
+     * Dipakai global scope Pengadaan: user TANPA `access_all_bisnis_area`
+     * hanya melihat pengadaan BA pada relasi ini.
+     */
+    public function bisnisAreas(): BelongsToMany
+    {
+        return $this->belongsToMany(BisnisArea::class, 'bisnis_area_user');
+    }
+
+    /**
+     * True jika user boleh melihat SEMUA bisnis area. Pakai
+     * getAllPermissions() (bukan can()) agar tidak melempar
+     * PermissionDoesNotExist saat permission belum ter-seed (test env).
+     */
+    public function canAccessAllBisnisArea(): bool
+    {
+        return $this->getAllPermissions()->contains('name', 'access_all_bisnis_area');
+    }
+
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');

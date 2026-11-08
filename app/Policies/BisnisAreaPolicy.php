@@ -29,7 +29,9 @@ class BisnisAreaPolicy
 
     public function delete(User $user, BisnisArea $bisnisArea): bool
     {
-        if ($bisnisArea->pengadaans()->exists()) {
+        // Dependency check harus melihat SEMUA pengadaan (bypass global scope
+        // bisnis-area) — BA tidak boleh dihapus walau pengadaannya di luar scope user.
+        if ($bisnisArea->pengadaans()->withoutGlobalScope('bisnis-area')->exists()) {
             return false;
         }
 

@@ -173,6 +173,7 @@ class RolePermissionService
             ],
             'Akses Data' => [
                 ['name' => 'access_all_cabang', 'label' => 'Akses Semua Cabang (COE/Pusat)'],
+                ['name' => 'access_all_bisnis_area', 'label' => 'Akses Semua Bisnis Area'],
             ],
         ];
 

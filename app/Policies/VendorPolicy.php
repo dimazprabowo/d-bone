@@ -29,7 +29,9 @@ class VendorPolicy
 
     public function delete(User $user, Vendor $vendor): bool
     {
-        if ($vendor->pengadaans()->exists()) {
+        // Dependency check bypass global scope bisnis-area — vendor tidak
+        // boleh dihapus walau pengadaannya di luar BA scope user.
+        if ($vendor->pengadaans()->withoutGlobalScope('bisnis-area')->exists()) {
             return false;
         }
 

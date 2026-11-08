@@ -25,9 +25,10 @@ class PengadaanDashboardExportTest extends TestCase
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
         Permission::firstOrCreate(['name' => 'access_all_cabang', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'access_all_bisnis_area', 'guard_name' => 'web']);
 
         $role = Role::firstOrCreate(['name' => 'test-role-dashboard-'.implode('-', $permissions), 'guard_name' => 'web']);
-        $role->syncPermissions(array_merge($permissions, ['access_all_cabang']));
+        $role->syncPermissions(array_merge($permissions, ['access_all_cabang', 'access_all_bisnis_area']));
 
         $user = User::factory()->create();
         $user->assignRole($role);

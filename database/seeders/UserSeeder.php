@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\UserApprovalStatus;
+use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -72,42 +73,6 @@ class UserSeeder extends Seeder
                 'role' => 'staff cabang',
             ],
             [
-                'email' => 'sm.trl@app.com',
-                'name' => 'SM Transportation and Logistics',
-                'password' => Hash::make('password'),
-                'phone' => '021-1234573',
-                'position' => 'Senior Manager TRL',
-                'cabang_id' => $cabangPriok?->id,
-                'role' => 'staff cabang',
-            ],
-            [
-                'email' => 'sm.acy@app.com',
-                'name' => 'SM BKI Academy',
-                'password' => Hash::make('password'),
-                'phone' => '021-1234574',
-                'position' => 'Senior Manager ACY',
-                'cabang_id' => $cabangPriok?->id,
-                'role' => 'staff cabang',
-            ],
-            [
-                'email' => 'sm.eni@app.com',
-                'name' => 'SM Energy and Industry',
-                'password' => Hash::make('password'),
-                'phone' => '021-1234575',
-                'position' => 'Senior Manager ENI',
-                'cabang_id' => $cabangPriok?->id,
-                'role' => 'staff cabang',
-            ],
-            [
-                'email' => 'sm.tkdn@app.com',
-                'name' => 'SM TKDN dan Pemerintahan',
-                'password' => Hash::make('password'),
-                'phone' => '021-1234576',
-                'position' => 'Senior Manager TKDN & Pemerintahan',
-                'cabang_id' => $cabangPriok?->id,
-                'role' => 'staff cabang',
-            ],
-            [
                 'email' => 'kepala.cabang@app.com',
                 'name' => 'Kepala Cabang',
                 'password' => Hash::make('password'),
@@ -129,6 +94,62 @@ class UserSeeder extends Seeder
             $user = User::firstOrCreate(['email' => $data['email']], $data);
             if (! $user->hasRole($role)) {
                 $user->assignRole($role);
+            }
+        }
+
+        $this->seedBisnisAreaUsers();
+    }
+
+    /**
+     * Buat akun SM + Admin untuk SETIAP bisnis area, lalu attach BA-nya via
+     * pivot bisnis_area_user (dipakai global scope Pengadaan — akun ini hanya
+     * melihat pengadaan & summary biaya BA-nya sendiri).
+     * Email: sm.{token-pertama-nama}@app.com / admin.{token}@app.com
+     * (TRL -> sm.trl@, TKDN & Pemerintahan -> sm.tkdn@ — konsisten dengan
+     *  mapping approver di ApprovalFlowSeeder via emailLocalPart()).
+     * cabang_id = null + role diberi access_all_cabang agar mereka melihat
+     * BA-nya di SEMUA cabang (fungsi BA adalah level pusat).
+     */
+    protected function seedBisnisAreaUsers(): void
+    {
+        $phoneCounter = 80;
+
+        foreach (BisnisArea::orderBy('id')->get() as $ba) {
+            $slug = $ba->emailLocalPart();
+
+            foreach ([
+                [
+                    'email' => "sm.{$slug}@app.com",
+                    'name' => "SM {$ba->name}",
+                    'position' => "Senior Manager {$ba->name}",
+                    'role' => 'senior manager',
+                ],
+                [
+                    'email' => "admin.{$slug}@app.com",
+                    'name' => "Admin {$ba->name}",
+                    'position' => "Admin Bisnis Area {$ba->name}",
+                    'role' => 'admin bisnis area',
+                ],
+            ] as $data) {
+                $role = $data['role'];
+                unset($data['role']);
+
+                $user = User::firstOrCreate(
+                    ['email' => $data['email']],
+                    [
+                        ...$data,
+                        'password' => Hash::make('password'),
+                        'phone' => '021-1234'.str_pad((string) $phoneCounter++, 3, '0', STR_PAD_LEFT),
+                        'cabang_id' => null,
+                        'is_active' => true,
+                        'approval_status' => UserApprovalStatus::Approved,
+                        'email_verified_at' => now(),
+                    ]
+                );
+
+                // Enforce role & BA assignment (idempotent — aman di re-seed).
+                $user->syncRoles([$role]);
+                $user->bisnisAreas()->syncWithoutDetaching([$ba->id]);
             }
         }
     }

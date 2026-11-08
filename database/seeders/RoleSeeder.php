@@ -33,7 +33,8 @@ class RoleSeeder extends Seeder
         $adminPusat = Role::firstOrCreate(['name' => 'admin pusat']);
         $adminPusat->syncPermissions(Permission::all());
 
-        // 3. Admin Cabang - Kelola pengadaan cabang sendiri (TANPA access_all_cabang)
+        // 3. Admin Cabang - Kelola pengadaan cabang sendiri (TANPA access_all_cabang,
+        //    tapi bisa lihat semua BA di dalam cakupan cabangnya)
         $adminCabang = Role::firstOrCreate(['name' => 'admin cabang']);
         $adminCabang->syncPermissions([
             'dashboard_view',
@@ -48,9 +49,10 @@ class RoleSeeder extends Seeder
             'chat_view',
             'chat_create',
             'chat_delete',
+            'access_all_bisnis_area',
         ]);
 
-        // 4. Staff Cabang - Basic: lihat pengadaan cabangnya
+        // 4. Staff Cabang - Basic: lihat pengadaan cabangnya (semua BA)
         $staffCabang = Role::firstOrCreate(['name' => 'staff cabang']);
         $staffCabang->syncPermissions([
             'dashboard_view',
@@ -59,6 +61,41 @@ class RoleSeeder extends Seeder
             'notifications_view',
             'chat_view',
             'chat_create',
+            'access_all_bisnis_area',
+        ]);
+
+        // 5. Admin Bisnis Area - Kelola pengadaan BA-nya sendiri di SEMUA cabang
+        //    (access_all_cabang agar tidak ter-scoped cabang; TANPA
+        //    access_all_bisnis_area sehingga ter-scope ke BA di pivot
+        //    bisnis_area_user — berlaku untuk list & summary biaya).
+        $adminBa = Role::firstOrCreate(['name' => 'admin bisnis area']);
+        $adminBa->syncPermissions([
+            'dashboard_view',
+            'cabang_view',
+            'pengadaan_view',
+            'pengadaan_create',
+            'pengadaan_update',
+            'pengadaan_delete',
+            'pengadaan_export_excel',
+            'pengadaan_export_pdf',
+            'notifications_view',
+            'chat_view',
+            'chat_create',
+            'chat_delete',
+            'access_all_cabang',
+        ]);
+
+        // 6. Senior Manager - View-only untuk BA-nya di semua cabang (approver
+        //    alur persetujuan; TANPA access_all_bisnis_area → scoped per BA).
+        $seniorManager = Role::firstOrCreate(['name' => 'senior manager']);
+        $seniorManager->syncPermissions([
+            'dashboard_view',
+            'cabang_view',
+            'pengadaan_view',
+            'notifications_view',
+            'chat_view',
+            'chat_create',
+            'access_all_cabang',
         ]);
     }
 }

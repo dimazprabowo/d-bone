@@ -13,6 +13,7 @@ use App\Services\ApprovalService;
 use App\Traits\Approvable;
 use App\Traits\Blameable;
 use App\Traits\HasEncryptedRouteKey;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -65,6 +66,19 @@ class Pengadaan extends Model
      */
     protected static function booted(): void
     {
+        // Bisnis-area scoping: user TANPA `access_all_bisnis_area` hanya
+        // melihat pengadaan BA yang di-assign lewat pivot `bisnis_area_user`
+        // (empty set = tidak melihat apa pun — deny by default). User
+        // dengan permission tsb (admin pusat/cabang, MK, SM Dukbis, staff)
+        // tidak di-scope. Berlaku untuk list, stats, dashboard & export.
+        static::addGlobalScope('bisnis-area', function (Builder $query) {
+            $user = auth()->user();
+
+            if ($user && ! $user->canAccessAllBisnisArea()) {
+                $query->whereIn('pengadaans.bisnis_area_id', $user->bisnisAreas->pluck('id'));
+            }
+        });
+
         static::deleted(function (Pengadaan $pengadaan) {
             if (! $pengadaan->isForceDeleting()) {
                 $pengadaan->newModelQuery()

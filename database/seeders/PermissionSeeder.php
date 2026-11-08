@@ -124,6 +124,9 @@ class PermissionSeeder extends Seeder
             // Data Scope — akses lintas-cabang (COE/Pusat). Dicek di Service/Policy
             // untuk bypass scoping cabang_id pada Pengadaan.
             'access_all_cabang',
+            // Data Scope — akses lintas-bisnis-area. Tanpa permission ini user
+            // hanya melihat pengadaan BA-nya sendiri (pivot bisnis_area_user).
+            'access_all_bisnis_area',
         ];
 
         foreach ($permissions as $permission) {

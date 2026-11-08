@@ -95,6 +95,28 @@ class PengadaanService
      * dan filter lanjutan) ke query — dipakai ulang oleh getFiltered
      * dan getFilteredStats.
      */
+    /**
+     * Guard BA-scope untuk write path: user TANPA `access_all_bisnis_area`
+     * hanya boleh membuat/mengubah pengadaan pada BA yang di-assign
+     * (pivot bisnis_area_user). Ditambah global scope, ini menutup celah
+     * create/update lintas BA via payload manipulasi.
+     */
+    protected function guardBisnisAreaAccess($bisnisAreaId): void
+    {
+        $user = auth()->user();
+
+        // User unscoped boleh BA apa pun (termasuk null / Fix Cost).
+        // User scoped wajib BA sendiri — record tanpa BA memang tidak akan
+        // terlihat oleh mereka via global scope.
+        abort_unless(
+            $user
+            && ($user->canAccessAllBisnisArea()
+                || ($bisnisAreaId && $user->bisnisAreas->contains('id', $bisnisAreaId))),
+            403,
+            'Anda hanya dapat mengelola pengadaan untuk bisnis area Anda.'
+        );
+    }
+
     protected function applyListFilters($query, ?string $search, array $vendorFilter, array $cabangFilter, array $statusFilter, array $filters): void
     {
         $userCabangId = auth()->check() ? auth()->user()->cabang_id : null;
@@ -255,6 +277,8 @@ class PengadaanService
             $data['status_approval'] = PengadaanApprovalStatus::Pending->value;
             $data['total_biaya'] = 0;
 
+            $this->guardBisnisAreaAccess($data['bisnis_area_id']);
+
             $pengadaan = Pengadaan::create($data);
 
             $total = $this->syncItems($pengadaan, $items);
@@ -289,6 +313,10 @@ class PengadaanService
                 $data['bisnis_area_id'] = $isRab ? ($data['bisnis_area_id'] ?? null) : null;
                 $data['nama_project'] = $isRab ? ($data['nama_project'] ?? null) : null;
                 $data['no_wbs'] = $isRab ? strtoupper($data['no_wbs'] ?? '') : null;
+            }
+
+            if (isset($data['bisnis_area_id'])) {
+                $this->guardBisnisAreaAccess($data['bisnis_area_id']);
             }
 
             $pengadaan->update($data);

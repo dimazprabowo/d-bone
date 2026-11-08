@@ -33,18 +33,13 @@ class ApprovalFlowSeeder extends Seeder
             ['name' => 'Approval Manager Keuangan atau SM Dukbis dan Penjualan', 'mode' => 'any', 'approvers' => [$mk->id, $smDukbis->id]],
         ], 1);
 
-        // Flow per Bisnis Area: RAB Project — SM BA dulu → Manager Keuangan atau SM Dukbis
-        $smPerBa = [
-            'TRL' => 'sm.trl@app.com',
-            'ACY' => 'sm.acy@app.com',
-            'ENI' => 'sm.eni@app.com',
-            'TKDN & Pemerintahan' => 'sm.tkdn@app.com',
-        ];
-
+        // Flow per Bisnis Area: RAB Project — SM BA dulu → Manager Keuangan atau SM Dukbis.
+        // Email akun SM diturunkan dari nama BA via emailLocalPart() agar selalu
+        // konsisten dengan akun yang dibuat UserSeeder (sm.{slug}@app.com).
         $priority = 2;
-        foreach ($smPerBa as $baName => $email) {
-            $ba = BisnisArea::where('name', $baName)->first();
-            $smBa = User::where('email', $email)->first();
+        foreach (BisnisArea::orderBy('id')->get() as $ba) {
+            $baName = $ba->name;
+            $smBa = User::where('email', 'sm.'.$ba->emailLocalPart().'@app.com')->first();
 
             if (! $ba || ! $smBa) {
                 continue;

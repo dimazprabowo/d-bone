@@ -32,12 +32,34 @@ class PengadaanManagementTest extends TestCase
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
         Permission::firstOrCreate(['name' => 'access_all_cabang', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'access_all_bisnis_area', 'guard_name' => 'web']);
 
         $role = Role::firstOrCreate(['name' => 'test-role-pengadaan', 'guard_name' => 'web']);
+        $role->syncPermissions(array_merge($permissions, ['access_all_cabang', 'access_all_bisnis_area']));
+
+        $user = User::factory()->create();
+        $user->assignRole($role);
+
+        return $user;
+    }
+
+    /**
+     * User BA-scoped: punya akses semua cabang TAPI tanpa
+     * access_all_bisnis_area, dan BA di-attach via pivot bisnis_area_user.
+     * User ini hanya boleh melihat pengadaan BA-nya sendiri.
+     */
+    protected function actingBaScopedUser(array $permissions, BisnisArea $ba): User
+    {
+        foreach (array_merge($permissions, ['access_all_cabang']) as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        }
+
+        $role = Role::create(['name' => 'test-role-ba-scoped-'.uniqid(), 'guard_name' => 'web']);
         $role->syncPermissions(array_merge($permissions, ['access_all_cabang']));
 
         $user = User::factory()->create();
         $user->assignRole($role);
+        $user->bisnisAreas()->attach($ba->id);
 
         return $user;
     }
@@ -73,6 +95,54 @@ class PengadaanManagementTest extends TestCase
             ->set('search', 'Budi Santoso')
             ->assertSee('SPK-PEMOHON-1')
             ->assertDontSee('SPK-PEMOHON-2');
+    }
+
+    public function test_bisnis_area_scoped_user_only_sees_own_ba_pengadaan(): void
+    {
+        $baTrl = BisnisArea::factory()->create(['name' => 'TRL']);
+        $baEni = BisnisArea::factory()->create(['name' => 'ENI']);
+        $user = $this->actingBaScopedUser(['pengadaan_view'], $baTrl);
+
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-BA-TRL', 'bisnis_area_id' => $baTrl->id]);
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-BA-ENI', 'bisnis_area_id' => $baEni->id]);
+
+        $this->actingAs($user);
+
+        Livewire::test(PengadaanManagement::class)
+            ->assertSee('SPK-BA-TRL')
+            ->assertDontSee('SPK-BA-ENI');
+    }
+
+    public function test_bisnis_area_scoped_user_with_no_ba_sees_nothing(): void
+    {
+        $ba = BisnisArea::factory()->create();
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-BA-ANY', 'bisnis_area_id' => $ba->id]);
+
+        $user = User::factory()->create();
+        $role = Role::create(['name' => 'test-role-no-ba-'.uniqid(), 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'pengadaan_view', 'guard_name' => 'web']);
+        $role->syncPermissions(['pengadaan_view']);
+        $user->assignRole($role);
+
+        $this->actingAs($user);
+
+        Livewire::test(PengadaanManagement::class)
+            ->assertDontSee('SPK-BA-ANY');
+    }
+
+    public function test_user_with_access_all_bisnis_area_sees_all(): void
+    {
+        $user = $this->actingUserWithPermissions(['pengadaan_view']);
+        $baTrl = BisnisArea::factory()->create(['name' => 'TRL']);
+        $baEni = BisnisArea::factory()->create(['name' => 'ENI']);
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-BA-TRL', 'bisnis_area_id' => $baTrl->id]);
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-BA-ENI', 'bisnis_area_id' => $baEni->id]);
+
+        $this->actingAs($user);
+
+        Livewire::test(PengadaanManagement::class)
+            ->assertSee('SPK-BA-TRL')
+            ->assertSee('SPK-BA-ENI');
     }
 
     public function test_dropdown_filters_accept_multiple_values(): void

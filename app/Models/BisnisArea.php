@@ -7,8 +7,10 @@ use App\Traits\Blameable;
 use App\Traits\HasEncryptedRouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -41,6 +43,21 @@ class BisnisArea extends Model
     public function pengadaans(): HasMany
     {
         return $this->hasMany(Pengadaan::class);
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'bisnis_area_user');
+    }
+
+    /**
+     * Local-part email akun BA (sm.{slug}@ / admin.{slug}@): token pertama
+     * nama di-lowercase — 'TRL'->'trl', 'TKDN & Pemerintahan'->'tkdn'.
+     * Dipakai UserSeeder & ApprovalFlowSeeder agar mapping email konsisten.
+     */
+    public function emailLocalPart(): string
+    {
+        return Str::of($this->name)->before(' ')->lower()->ascii()->toString();
     }
 
     public function scopeActive($query)

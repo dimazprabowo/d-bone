@@ -286,10 +286,17 @@ class PengadaanForm extends Component
 
     public function getBisnisAreaOptionsProperty(): array
     {
-        return BisnisArea::active()->orderBy('name')->get()->map(fn ($b) => [
-            'value' => $b->id,
-            'label' => $b->name,
-        ])->toArray();
+        // User tanpa access_all_bisnis_area (admin BA/SM) hanya boleh
+        // memilih BA yang di-assign — selaras global scope + service guard.
+        $user = auth()->user();
+
+        return BisnisArea::active()
+            ->when($user && ! $user->canAccessAllBisnisArea(),
+                fn ($q) => $q->whereIn('id', $user->bisnisAreas->pluck('id')))
+            ->orderBy('name')->get()->map(fn ($b) => [
+                'value' => $b->id,
+                'label' => $b->name,
+            ])->toArray();
     }
 
     public function getSatuanOptionsProperty(): array

@@ -219,10 +219,15 @@ class PengadaanManagement extends Component
 
     public function getBisnisAreaOptionsProperty(): array
     {
-        return BisnisArea::active()->orderBy('name')->get()->map(fn ($b) => [
-            'value' => $b->id,
-            'label' => $b->name,
-        ])->toArray();
+        $user = auth()->user();
+
+        return BisnisArea::active()
+            ->when($user && ! $user->canAccessAllBisnisArea(),
+                fn ($q) => $q->whereIn('id', $user->bisnisAreas->pluck('id')))
+            ->orderBy('name')->get()->map(fn ($b) => [
+                'value' => $b->id,
+                'label' => $b->name,
+            ])->toArray();
     }
 
     public function getTipeBiayaOptionsProperty(): array
