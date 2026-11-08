@@ -179,6 +179,8 @@ class KategoriItemManagement extends Component
             $this->showDeleteModal = false;
         } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak dapat menghapus kategori item ini.');
+        } catch (\DomainException $e) {
+            $this->notifyError($e->getMessage());
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
         }

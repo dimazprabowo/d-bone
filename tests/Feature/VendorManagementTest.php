@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\MasterData\VendorManagement;
 use App\Models\Klaster;
+use App\Models\Pengadaan;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -116,6 +117,44 @@ class VendorManagementTest extends TestCase
             ->call('delete');
 
         $this->assertSoftDeleted('vendors', ['id' => $vendor->id]);
+    }
+
+    public function test_vendor_used_by_pengadaan_cannot_be_deleted(): void
+    {
+        $user = $this->actingUserWithPermissions(['vendor_view', 'vendor_delete']);
+        $vendor = Vendor::factory()->create();
+        Pengadaan::factory()->create(['vendor_id' => $vendor->id]);
+
+        $this->actingAs($user);
+
+        Livewire::test(VendorManagement::class)
+            ->call('confirmDelete', $vendor->id)
+            ->call('delete')
+            ->assertNotDispatched('notifySuccess');
+
+        $this->assertDatabaseHas('vendors', [
+            'id' => $vendor->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_vendor_used_by_deleted_pengadaan_cannot_be_deleted(): void
+    {
+        $user = $this->actingUserWithPermissions(['vendor_view', 'vendor_delete']);
+        $vendor = Vendor::factory()->create();
+        Pengadaan::factory()->create(['vendor_id' => $vendor->id])->delete();
+
+        $this->actingAs($user);
+
+        Livewire::test(VendorManagement::class)
+            ->call('confirmDelete', $vendor->id)
+            ->call('delete')
+            ->assertNotDispatched('notifySuccess');
+
+        $this->assertDatabaseHas('vendors', [
+            'id' => $vendor->id,
+            'deleted_at' => null,
+        ]);
     }
 
     public function test_code_must_be_unique(): void

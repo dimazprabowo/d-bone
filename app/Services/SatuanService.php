@@ -68,6 +68,14 @@ class SatuanService
 
     public function delete(Satuan $satuan): void
     {
+        // pengadaan_items.satuan_id = restrictOnDelete — blokir dgn pesan jelas.
+        $dipakai = $satuan->pengadaanItems()->count();
+        if ($dipakai > 0) {
+            throw new \DomainException(
+                "Satuan \"{$satuan->name}\" tidak dapat dihapus karena masih digunakan oleh {$dipakai} item pengadaan."
+            );
+        }
+
         $satuan->delete();
     }
 

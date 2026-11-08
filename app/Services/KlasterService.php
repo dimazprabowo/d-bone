@@ -68,6 +68,15 @@ class KlasterService
 
     public function delete(Klaster $klaster): void
     {
+        // vendors.klaster_id = restrictOnDelete — blokir dgn pesan jelas
+        // (termasuk vendor soft-deleted yang masih mereferensikan).
+        $dipakai = $klaster->vendors()->withTrashed()->count();
+        if ($dipakai > 0) {
+            throw new \DomainException(
+                "Klaster \"{$klaster->name}\" tidak dapat dihapus karena masih digunakan oleh {$dipakai} vendor."
+            );
+        }
+
         $klaster->delete();
     }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\VendorStatus;
+use App\Models\Pengadaan;
 use App\Models\Vendor;
 use App\Traits\HasDynamicLike;
 use App\Traits\SortsQuery;
@@ -82,6 +83,21 @@ class VendorService
 
     public function delete(Vendor $vendor): void
     {
+        // pengadaans.vendor_id = restrictOnDelete — blokir dgn pesan jelas.
+        // Cek referensi FISIK: bypass global scope bisnis-area (boleh hapus
+        // hanya bila tak ada pengadaan apa pun yang mereferensikan, termasuk
+        // yang soft-deleted / di luar BA user).
+        // Link kategori_item_vendor cascade bersih otomatis.
+        $dipakai = Pengadaan::withTrashed()
+            ->withoutGlobalScope('bisnis-area')
+            ->where('vendor_id', $vendor->id)
+            ->count();
+        if ($dipakai > 0) {
+            throw new \DomainException(
+                "Vendor \"{$vendor->name}\" tidak dapat dihapus karena masih digunakan oleh {$dipakai} pengadaan."
+            );
+        }
+
         $vendor->delete();
     }
 

@@ -179,6 +179,8 @@ class KlasterManagement extends Component
             $this->showDeleteModal = false;
         } catch (AuthorizationException $e) {
             $this->notifyError('Anda tidak dapat menghapus klaster ini.');
+        } catch (\DomainException $e) {
+            $this->notifyError($e->getMessage());
         } catch (\Exception $e) {
             $this->notifyError('Terjadi kesalahan sistem. Silakan coba lagi.');
         }
