@@ -68,10 +68,29 @@ class RoleSeeder extends Seeder
         //    (access_all_cabang agar tidak ter-scoped cabang; TANPA
         //    access_all_bisnis_area sehingga ter-scope ke BA di pivot
         //    bisnis_area_user — berlaku untuk list & summary biaya).
+        //    Juga kelola master data pendukung pengadaan (klaster, satuan,
+        //    kategori item, vendor — TANPA cabang, itu domain pusat).
+        //    Delete dibatasi Policy: data yang sudah dipakai
+        //    (vendor/pengadaan item/pengadaan) tidak bisa dihapus.
         $adminBa = Role::firstOrCreate(['name' => 'admin bisnis area']);
         $adminBa->syncPermissions([
             'dashboard_view',
-            'cabang_view',
+            'klaster_view',
+            'klaster_create',
+            'klaster_update',
+            'klaster_delete',
+            'satuan_view',
+            'satuan_create',
+            'satuan_update',
+            'satuan_delete',
+            'kategori_item_view',
+            'kategori_item_create',
+            'kategori_item_update',
+            'kategori_item_delete',
+            'vendor_view',
+            'vendor_create',
+            'vendor_update',
+            'vendor_delete',
             'pengadaan_view',
             'pengadaan_create',
             'pengadaan_update',
