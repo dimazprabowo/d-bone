@@ -57,7 +57,13 @@
             if (!Array.isArray(this.selectedValues)) return false;
             return this.selectedValues.includes(value);
         },
-        
+
+        refreshOptions() {
+            if (this.$refs.optionsData) {
+                this.options = JSON.parse(this.$refs.optionsData.textContent || '[]');
+            }
+        },
+
         toggleOption(option) {
             if (!Array.isArray(this.selectedValues)) {
                 this.selectedValues = [];
