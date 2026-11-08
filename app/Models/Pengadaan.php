@@ -55,6 +55,29 @@ class Pengadaan extends Model
         'deleted_at' => 'datetime',
     ];
 
+    /**
+     * Jaga marker unique (no_pesanan_spk, deleted_spk_marker): record aktif
+     * selalu '0' sehingga index menolak nomor duplikat; saat soft-delete diisi
+     * id agar nomor bebas dipakai ulang. Dikelola via model event (bukan
+     * generated column) karena MySQL melarang referensi kolom auto_increment.
+     * Catatan: delete harus lewat model event ($pengadaan->delete()), bukan
+     * bulk query-builder delete yang bypass event.
+     */
+    protected static function booted(): void
+    {
+        static::deleted(function (Pengadaan $pengadaan) {
+            if (! $pengadaan->isForceDeleting()) {
+                $pengadaan->newModelQuery()
+                    ->whereKey($pengadaan->getKey())
+                    ->update(['deleted_spk_marker' => (string) $pengadaan->getKey()]);
+            }
+        });
+
+        static::restoring(function (Pengadaan $pengadaan) {
+            $pengadaan->deleted_spk_marker = '0';
+        });
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

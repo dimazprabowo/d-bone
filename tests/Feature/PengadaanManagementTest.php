@@ -358,6 +358,24 @@ class PengadaanManagementTest extends TestCase
         $this->assertSoftDeleted('pengadaans', ['id' => $pengadaan->id]);
     }
 
+    public function test_deleted_pengadaan_spk_number_can_be_reused(): void
+    {
+        $pengadaan = Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-REUSE-1']);
+
+        $pengadaan->delete();
+
+        $this->assertDatabaseHas('pengadaans', [
+            'id' => $pengadaan->id,
+            'deleted_spk_marker' => (string) $pengadaan->id,
+        ]);
+
+        Pengadaan::factory()->create(['no_pesanan_spk' => 'SPK-REUSE-1']);
+
+        $this->assertEquals(2, Pengadaan::withTrashed()
+            ->where('no_pesanan_spk', 'SPK-REUSE-1')
+            ->count());
+    }
+
     public function test_jatuh_tempo_status_derived_from_unpaid_invoice_age(): void
     {
         SystemConfiguration::create([

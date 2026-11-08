@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -31,23 +30,20 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            // Unique hanya untuk record aktif — nomor milik record soft-deleted
+            // boleh dipakai ulang. Marker '0' = aktif; saat soft-delete diisi id
+            // (lihat Pengadaan::booted). Bukan generated column: MySQL melarang
+            // referensi kolom AUTO_INCREMENT di GENERATED ALWAYS (error 1901),
+            // dan MySQL tidak support partial index.
+            $table->string('deleted_spk_marker', 20)->default('0');
+
             $table->index('vendor_id');
             $table->index('bisnis_area_id');
             $table->index('cabang_id');
             $table->index('status_approval');
             $table->index('tanggal_pesanan_spk');
+            $table->unique(['no_pesanan_spk', 'deleted_spk_marker'], 'pengadaans_no_pesanan_spk_unique');
         });
-
-        // Unique hanya untuk record aktif — soft-deleted boleh dipakai ulang.
-        // Postgres/SQLite: partial index. MySQL tidak support partial index
-        // → generated marker column (aktif='0', terhapus=id) + composite unique.
-        $driver = Schema::getConnection()->getDriverName();
-        if ($driver === 'mysql') {
-            DB::statement('ALTER TABLE pengadaans ADD COLUMN deleted_spk_marker VARCHAR(60) GENERATED ALWAYS AS (IF(deleted_at IS NULL, "0", CAST(id AS CHAR))) STORED');
-            DB::statement('CREATE UNIQUE INDEX pengadaans_no_pesanan_spk_unique ON pengadaans (no_pesanan_spk, deleted_spk_marker)');
-        } else {
-            DB::statement('CREATE UNIQUE INDEX pengadaans_no_pesanan_spk_unique ON pengadaans (no_pesanan_spk) WHERE deleted_at IS NULL');
-        }
     }
 
     public function down(): void
