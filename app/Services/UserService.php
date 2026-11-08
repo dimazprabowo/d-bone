@@ -25,7 +25,7 @@ class UserService
         ?string $sortField = null,
         string $sortDir = 'asc'
     ): LengthAwarePaginator {
-        $query = User::with(['roles', 'cabang']);
+        $query = User::with(['roles', 'cabang', 'bisnisAreas']);
 
         if ($search) {
             $operator = $this->getLikeOperator();
@@ -69,7 +69,7 @@ class UserService
         return $query->paginate($perPage);
     }
 
-    public function create(array $data, array $roles): User
+    public function create(array $data, array $roles, array $bisnisAreas = []): User
     {
         $user = User::create([
             'name' => $data['name'],
@@ -84,11 +84,12 @@ class UserService
         ]);
 
         $user->syncRoles($roles);
+        $user->bisnisAreas()->sync($bisnisAreas);
 
         return $user;
     }
 
-    public function update(User $user, array $data, array $roles): User
+    public function update(User $user, array $data, array $roles, array $bisnisAreas = []): User
     {
         $updateData = [
             'name' => $data['name'],
@@ -105,6 +106,7 @@ class UserService
 
         $user->update($updateData);
         $user->syncRoles($roles);
+        $user->bisnisAreas()->sync($bisnisAreas);
 
         if (! $user->is_active) {
             $this->invalidateSessions($user);

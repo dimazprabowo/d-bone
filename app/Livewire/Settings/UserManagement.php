@@ -6,6 +6,7 @@ use App\Enums\UserApprovalStatus;
 use App\Exports\UsersExport;
 use App\Livewire\Traits\HasNotification;
 use App\Livewire\Traits\HasTableSorting;
+use App\Models\BisnisArea;
 use App\Models\Cabang;
 use App\Models\User;
 use App\Services\UserService;
@@ -60,6 +61,8 @@ class UserManagement extends Component
 
     public $selectedRoles = [];
 
+    public $selectedBisnisAreas = [];
+
     // Reset Password Modal
     public $showResetPasswordModal = false;
 
@@ -108,6 +111,11 @@ class UserManagement extends Component
         $cabangScopedRoles = ['admin cabang', 'staff cabang'];
         $needsCabang = ! empty(array_intersect($this->selectedRoles, $cabangScopedRoles));
 
+        // Bisnis area wajib jika role yang dipilih adalah role BA-scoped —
+        // tanpa BA, user scoped tidak melihat pengadaan apa pun (deny-by-default).
+        $baScopedRoles = ['admin bisnis area', 'senior manager'];
+        $needsBa = ! empty(array_intersect($this->selectedRoles, $baScopedRoles));
+
         $rules = [
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', $this->editMode ? 'unique:users,email,'.$this->userId : 'unique:users,email'],
@@ -117,6 +125,8 @@ class UserManagement extends Component
             'is_active' => 'boolean',
             'selectedRoles' => 'required|array|min:1',
             'selectedRoles.*' => 'exists:roles,name',
+            'selectedBisnisAreas' => $needsBa ? 'required|array|min:1' : 'nullable|array',
+            'selectedBisnisAreas.*' => 'exists:bisnis_areas,id',
         ];
 
         if (! $this->editMode) {
@@ -176,6 +186,14 @@ class UserManagement extends Component
         $this->notifySuccess('Filter berhasil direset.');
     }
 
+    public function getBisnisAreaOptionsProperty(): array
+    {
+        return BisnisArea::active()->orderBy('name')->get()->map(fn ($b) => [
+            'value' => $b->id,
+            'label' => $b->name,
+        ])->toArray();
+    }
+
     public function getRoleOptionsProperty(): array
     {
         return Role::all()->map(fn ($role) => [
@@ -211,7 +229,7 @@ class UserManagement extends Component
 
     public function edit($id)
     {
-        $user = User::with('roles')->findOrFail($id);
+        $user = User::with(['roles', 'bisnisAreas'])->findOrFail($id);
         $this->authorize('update', $user);
 
         $this->userId = $user->id;
@@ -222,6 +240,7 @@ class UserManagement extends Component
         $this->position = $user->position;
         $this->is_active = $user->is_active;
         $this->selectedRoles = $user->getRoleNames()->toArray();
+        $this->selectedBisnisAreas = $user->bisnisAreas->pluck('id')->toArray();
 
         $this->editMode = true;
         $this->showModal = true;
@@ -251,7 +270,7 @@ class UserManagement extends Component
                 $user = User::findOrFail($this->userId);
                 $this->authorize('update', $user);
 
-                $service->update($user, $data, $this->selectedRoles);
+                $service->update($user, $data, $this->selectedRoles, $this->selectedBisnisAreas);
                 $message = 'User berhasil diupdate!';
 
                 if ($user->id === auth()->id()) {
@@ -260,7 +279,7 @@ class UserManagement extends Component
             } else {
                 $this->authorize('create', User::class);
 
-                $service->create($data, $this->selectedRoles);
+                $service->create($data, $this->selectedRoles, $this->selectedBisnisAreas);
                 $message = 'User berhasil ditambahkan!';
             }
 
@@ -380,6 +399,7 @@ class UserManagement extends Component
             'position',
             'is_active',
             'selectedRoles',
+            'selectedBisnisAreas',
         ]);
 
         $this->is_active = true;

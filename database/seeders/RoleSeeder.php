@@ -97,5 +97,20 @@ class RoleSeeder extends Seeder
             'chat_create',
             'access_all_cabang',
         ]);
+
+        // 7. Manager Pusat - Staff-level tapi lintas cabang & BA (untuk
+        //    approver pusat seperti Manager Keuangan & SM Dukbis — mereka
+        //    adalah approver step-2 untuk pengadaan semua BA/cabang).
+        $managerPusat = Role::firstOrCreate(['name' => 'manager pusat']);
+        $managerPusat->syncPermissions([
+            'dashboard_view',
+            'cabang_view',
+            'pengadaan_view',
+            'notifications_view',
+            'chat_view',
+            'chat_create',
+            'access_all_cabang',
+            'access_all_bisnis_area',
+        ]);
     }
 }

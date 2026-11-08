@@ -13,8 +13,9 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $cabangPriok = Cabang::where('code', 'JKT')->first();
-        $cabangSurabaya = Cabang::where('code', 'JKT')->first();
+        // Semua akun di bawah ini (kecuali super admin & admin pusat/COE)
+        // adalah akun Cabang Jakarta (JKT) — satu-satunya cabang saat ini.
+        $cabangJkt = Cabang::where('code', 'JKT')->first();
 
         $seedUsers = [
             [
@@ -41,16 +42,16 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'phone' => '021-1234568',
                 'position' => 'Admin Cabang',
-                'cabang_id' => $cabangPriok?->id,
+                'cabang_id' => $cabangJkt?->id,
                 'role' => 'admin cabang',
             ],
             [
                 'email' => 'user@app.com',
-                'name' => 'Staff Cabang Surabaya',
+                'name' => 'Staff Cabang Jakarta',
                 'password' => Hash::make('password'),
                 'phone' => '021-1234569',
                 'position' => 'Staff',
-                'cabang_id' => $cabangSurabaya?->id,
+                'cabang_id' => $cabangJkt?->id,
                 'role' => 'staff cabang',
             ],
             // Approver akun — dipakai di Alur Persetujuan
@@ -60,8 +61,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'phone' => '021-1234570',
                 'position' => 'Manager Keuangan',
-                'cabang_id' => $cabangPriok?->id,
-                'role' => 'staff cabang',
+                'cabang_id' => $cabangJkt?->id,
+                'role' => 'manager pusat',
             ],
             [
                 'email' => 'sm.dukbis.penjualan@app.com',
@@ -69,8 +70,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'phone' => '021-1234571',
                 'position' => 'Senior Manager Dukungan Bisnis dan Penjualan',
-                'cabang_id' => $cabangPriok?->id,
-                'role' => 'staff cabang',
+                'cabang_id' => $cabangJkt?->id,
+                'role' => 'manager pusat',
             ],
             [
                 'email' => 'kepala.cabang@app.com',
@@ -78,7 +79,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'phone' => '021-1234572',
                 'position' => 'Kepala Cabang',
-                'cabang_id' => $cabangPriok?->id,
+                'cabang_id' => $cabangJkt?->id,
                 'role' => 'staff cabang',
             ],
         ];
@@ -97,7 +98,7 @@ class UserSeeder extends Seeder
             }
         }
 
-        $this->seedBisnisAreaUsers();
+        $this->seedBisnisAreaUsers($cabangJkt);
     }
 
     /**
@@ -107,10 +108,10 @@ class UserSeeder extends Seeder
      * Email: sm.{token-pertama-nama}@app.com / admin.{token}@app.com
      * (TRL -> sm.trl@, TKDN & Pemerintahan -> sm.tkdn@ — konsisten dengan
      *  mapping approver di ApprovalFlowSeeder via emailLocalPart()).
-     * cabang_id = null + role diberi access_all_cabang agar mereka melihat
-     * BA-nya di SEMUA cabang (fungsi BA adalah level pusat).
+     * cabang_id = JKT (mereka tetap akun Cabang Jakarta secara organisasi),
+     * tapi role diberi access_all_cabang agar melihat BA-nya di SEMUA cabang.
      */
-    protected function seedBisnisAreaUsers(): void
+    protected function seedBisnisAreaUsers(?Cabang $cabangJkt): void
     {
         $phoneCounter = 80;
 
@@ -140,7 +141,7 @@ class UserSeeder extends Seeder
                         ...$data,
                         'password' => Hash::make('password'),
                         'phone' => '021-1234'.str_pad((string) $phoneCounter++, 3, '0', STR_PAD_LEFT),
-                        'cabang_id' => null,
+                        'cabang_id' => $cabangJkt?->id,
                         'is_active' => true,
                         'approval_status' => UserApprovalStatus::Approved,
                         'email_verified_at' => now(),

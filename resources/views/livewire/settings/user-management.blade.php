@@ -127,6 +127,8 @@
                                         'super admin' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400',
                                         'admin pusat' => 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
                                         'admin cabang' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+                                        'admin bisnis area' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400',
+                                        'senior manager' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400',
                                         'staff cabang' => 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
                                     ];
                                 @endphp
@@ -151,6 +153,11 @@
                                         </span>
                                     @else
                                         <span class="text-xs text-gray-400 dark:text-gray-500">Semua Cabang</span>
+                                    @endif
+                                    @if($user->bisnisAreas->isNotEmpty())
+                                        <div class="mt-1 text-xs text-indigo-600 dark:text-indigo-400" title="Bisnis Area ter-assign">
+                                            BA: {{ $user->bisnisAreas->pluck('name')->join(', ') }}
+                                        </div>
                                     @endif
                                 </div>
                             </td>
@@ -389,6 +396,26 @@
                                         <p class="mt-2 text-xs text-amber-600 dark:text-amber-400">Wajib untuk role Admin Cabang / Staff Cabang.</p>
                                     @endif
                                     <x-input-error :messages="$errors->get('cabang_id')" class="mt-2" />
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    @php
+                                        $baScopedRoles = ['admin bisnis area', 'senior manager'];
+                                        $needsBa = !empty(array_intersect($selectedRoles ?? [], $baScopedRoles));
+                                    @endphp
+                                    <x-input-label for="selectedBisnisAreas" value="Bisnis Area" :required="$needsBa" />
+                                    <x-multi-searchable-select
+                                        wire:model.live="selectedBisnisAreas"
+                                        :options="$this->bisnisAreaOptions"
+                                        placeholder="Tidak ada (user tidak ter-scope BA)"
+                                        searchPlaceholder="Cari bisnis area..."
+                                        :error="$errors->has('selectedBisnisAreas') || $errors->has('selectedBisnisAreas.*')"
+                                    />
+                                    <p class="mt-2 text-xs {{ $needsBa ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400' }}">
+                                        {{ $needsBa ? 'Wajib untuk role Admin Bisnis Area / Senior Manager — user hanya melihat pengadaan & summary biaya BA yang dipilih.' : 'Hanya berlaku untuk role scoped-BA (Admin Bisnis Area / Senior Manager).' }}
+                                    </p>
+                                    <x-input-error :messages="$errors->get('selectedBisnisAreas')" class="mt-2" />
+                                    <x-input-error :messages="$errors->get('selectedBisnisAreas.*')" class="mt-2" />
                                 </div>
 
                                 <div>
